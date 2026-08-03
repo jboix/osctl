@@ -1,0 +1,73 @@
+# Local OpenSearch environment for integration testing. Not for production.
+#
+#   bun run env:up          # OpenSearch on :9200 (no auth) + Dashboards on :5601
+#   bun run env:up:secure   # the same, plus a secured node on :9201 (https, basic auth)
+#   bun run env:stop        # stop, keeping all data
+#   bun run env:down        # stop and reset all data
+
+name: osctl
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:3
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - '9200:9200'
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fs http://localhost:9200/_cluster/health || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:3
+    environment:
+      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - '5601:5601'
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  # Secured node to test the auth flow: https with self-signed demo certificates,
+  # user "admin", password from OSCTL_DEV_ADMIN_PASSWORD (default below).
+  opensearch-secure:
+    profiles: ['secure']
+    image: opensearchproject/opensearch:3
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OSCTL_DEV_ADMIN_PASSWORD:-OsctlDev!2345}
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - '9201:9200'
+    volumes:
+      - opensearch-secure-data:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -fsk -u "admin:${OSCTL_DEV_ADMIN_PASSWORD:-OsctlDev!2345}" https://localhost:9200/_cluster/health || exit 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+volumes:
+  opensearch-data:
+  opensearch-secure-data:

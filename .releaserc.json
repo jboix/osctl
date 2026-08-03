@@ -1,0 +1,28 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/npm",
+    ["@semantic-release/exec", { "prepareCmd": "bun run build:all" }],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "dist/osctl-linux-x64", "label": "osctl linux x64" },
+          { "path": "dist/osctl-linux-arm64", "label": "osctl linux arm64" },
+          { "path": "dist/osctl-darwin-x64", "label": "osctl macos x64" },
+          { "path": "dist/osctl-darwin-arm64", "label": "osctl macos arm64" },
+          { "path": "install-osctl.sh", "label": "install script" }
+        ]
+      }
+    ]
+  ]
+}
