@@ -54,7 +54,7 @@ the contract. Here is a summary of the design choices:
   `scripts/` and in tests.
 - Configuration is saved profiles only. Passwords are never written to disk.
 - Destructive commands preview their effect and confirm.
-- `index rollover` reapplies aliases missing on the new head.
+- `/index rollover` reapplies aliases missing on the new head.
 
 Update the design doc in the same change as the code, if it is needed.
 

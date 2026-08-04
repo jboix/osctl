@@ -64,6 +64,9 @@
     "@clack/prompts": "^1.7.0",
     "@opensearch-project/opensearch": "^3.6.0",
     "ink": "^7.1.1",
-    "react": "^19.2.8"
+    "ink-select-input": "^6.2.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^19.2.8",
+    "react-router": "^8.3.0"
   }
 }

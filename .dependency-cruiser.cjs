@@ -1,8 +1,14 @@
 /**
- * Architecture boundaries. Run with `bun run arch`.
- *
- * The layer rules are added together with the source layout. The rules below are
- * layout-independent.
+ * Architecture boundaries. The directories are the layers:
+ *   src/engine/config     - saved profiles and the configuration file. Bottom layer.
+ *   src/engine/connection - the OpenSearch client handle.
+ *   src/engine/queries    - CQRS read side.
+ *   src/engine/commands   - CQRS write side (plan and execute).
+ *   src/engine/engine.ts  - the facade, the only engine module the frontend imports.
+ *   src/frontend          - presentation: components, screens, and the REPL shell.
+ *   src/index.tsx         - the entry. Wires the engine and the shell.
+ * Types live with the module that owns them.
+ * Run with `bun run arch`.
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
@@ -21,6 +27,81 @@ module.exports = {
       comment: 'Production code must not import test files.',
       from: { pathNot: '\\.test\\.(ts|tsx)$' },
       to: { path: '\\.test\\.(ts|tsx)$' },
+    },
+    {
+      name: 'engine-is-headless',
+      severity: 'error',
+      comment:
+        'The engine renders nothing. Ink, React, and prompt libraries are frontend-only.',
+      from: { path: '^src/engine/' },
+      to: { path: '^node_modules/(ink|react|@clack)' },
+    },
+    {
+      name: 'engine-imports-no-frontend',
+      severity: 'error',
+      comment: 'The engine is the bottom layer of the two-layer split.',
+      from: { path: '^src/engine/' },
+      to: { path: '^src/frontend/' },
+    },
+    {
+      name: 'frontend-uses-the-facade',
+      severity: 'error',
+      comment:
+        'The frontend drives the engine only through src/engine/engine.ts.',
+      from: { path: '^src/frontend/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: { path: '^src/engine/', pathNot: '^src/engine/engine\\.ts$' },
+    },
+    {
+      name: 'components-are-dumb',
+      severity: 'error',
+      comment: 'Reusable widgets receive data as props. They know no engine.',
+      from: { path: '^src/frontend/components/' },
+      to: { path: '^src/engine/' },
+    },
+    {
+      name: 'config-is-isolated',
+      severity: 'error',
+      comment:
+        'The config is the bottom of the engine. It imports no other src module.',
+      from: { path: '^src/engine/config/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: { path: '^src/', pathNot: '^src/engine/config/' },
+    },
+    {
+      name: 'connection-knows-only-the-config',
+      severity: 'error',
+      comment:
+        'The connection wraps the client. It knows no queries or commands.',
+      from: { path: '^src/engine/connection/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: { path: '^src/', pathNot: '^src/engine/(connection|config)/' },
+    },
+    {
+      name: 'queries-do-not-write',
+      severity: 'error',
+      comment:
+        'The read side imports the config and the connection, never the write side.',
+      from: { path: '^src/engine/queries/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: {
+        path: '^src/',
+        pathNot: '^src/engine/(queries|connection|config)/',
+      },
+    },
+    {
+      name: 'commands-stay-in-the-engine',
+      severity: 'error',
+      comment:
+        'The write side may reuse queries for its plan phase, nothing above that.',
+      from: { path: '^src/engine/commands/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: {
+        path: '^src/',
+        pathNot: '^src/engine/(commands|queries|connection|config)/',
+      },
+    },
+    {
+      name: 'only-the-entry-imports-the-shell',
+      severity: 'error',
+      comment: 'The shell is the composition root of the frontend.',
+      from: { pathNot: '^src/(index\\.tsx$|frontend/shell/)' },
+      to: { path: '^src/frontend/shell/' },
     },
   ],
   options: {

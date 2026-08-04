@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/engine/engine.ts"],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts"],
-  "ignoreDependencies": ["@clack/prompts", "@opensearch-project/opensearch"]
+  "ignoreDependencies": ["@clack/prompts"]
 }

@@ -1,4 +1,14 @@
-# osctl
+<div align="center">
+
+[![OSCTL Screenshot](docs/README-images/screenshot.png)](https://github.com/jboix/osctl)
+[![Quality](https://github.com/jboix/osctl/actions/workflows/quality.yml/badge.svg)](https://github.com/jboix/osctl/actions/workflows/quality.yml)
+[![npm version](https://img.shields.io/npm/v/osctl)](https://www.npmjs.com/package/osctl)
+[![node](https://img.shields.io/node/v/osctl)](https://nodejs.org)
+[![license: MIT](https://img.shields.io/npm/l/osctl)](./LICENSE)
+
+</div>
+
+# OSCTL
 
 An interactive terminal client for OpenSearch operations.
 
@@ -11,17 +21,17 @@ visualizations for the state that OpenSearch only exposes as raw JSON.
 - Interactive REPL: type `/` for a fuzzy-filtered command palette, Tab for autocomplete.
 - Autocomplete uses live resource names from the connected cluster: indices, aliases, templates,
   policies.
-- `index ls` shows health, doc count, size, and attached aliases per index.
-- `index rm` opens a multi-select list with sizes, then confirms with totals. It warns before
+- `/index ls` shows health, doc count, size, and attached aliases per index.
+- `/index rm` opens a multi-select list with sizes, then confirms with totals. It warns before
   deleting a write index.
-- `index rollover` diffs aliases between the old and new head, then reapplies missing ones.
-- `alias ls` renders the alias tree: which alias points to which index, write index marked,
+- `/index rollover` diffs aliases between the old and new head, then reapplies missing ones.
+- `/alias ls` renders the alias tree: which alias points to which index, write index marked,
   filters shown.
-- `alias check` finds head indices missing their expected aliases and offers to fix them.
-- `template edit` and `policy edit` open the live document in `$EDITOR` and show a diff before
+- `/alias check` finds head indices missing their expected aliases and offers to fix them.
+- `/template edit` and `/policy edit` open the live document in `$EDITOR` and show a diff before
   applying.
-- `policy apply` resolves `seq_no` and `primary_term` internally.
-- `policy explain` shows the ISM state per index: current state, age, next transition, failures.
+- `/policy apply` resolves `seq_no` and `primary_term` internally.
+- `/policy explain` shows the ISM state per index: current state, age, next transition, failures.
 - JSON input by file, paste, or a file dropped on the terminal, validated as you type.
 - Cluster profiles with the active profile and cluster health always visible in the status bar.
 - Passwords are never written to disk. osctl prompts once per session.
@@ -65,14 +75,14 @@ Welcome to osctl. No profile found, let's connect to a cluster.
   Password         > ********
   Testing connection... connected: opensearch 2.11.1, health green
 
-[prod] green > index ls core_events*
+[prod] green > /index ls core_events*
   core_events-000003   green   12.4M docs   2.1 GB   user_events, core_user_events
   core_events-000004   green    3.1M docs   0.6 GB   core_events (write)
 
 [prod] green > /
-  > index rollover    Roll over a write alias and carry its aliases
-    index rm          Delete indices from a multi-select list
-    alias check       Find heads missing expected aliases
+  > /index rollover    Roll over a write alias and carry its aliases
+    /index rm          Delete indices from a multi-select list
+    /alias check       Find heads missing expected aliases
     ...
 ```
 

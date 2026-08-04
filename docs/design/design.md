@@ -19,9 +19,32 @@ policies. It replaces the shell scripts in `scripts/osctl`. The name stands for 
 | Language            | TypeScript                                     |
 | Runtime             | Bun                                            |
 | Terminal UI         | Ink                                            |
+| Screen routing      | react-router (`MemoryRouter`)                  |
 | Prompts and wizards | @clack/prompts                                 |
 | OpenSearch access   | @opensearch-project/opensearch                 |
 | Packaging           | `bun build --compile`, one binary per platform |
+
+## Architecture
+
+Two layers, enforced by dependency-cruiser (`bun run arch`):
+
+- The engine (`src/engine/`) is the whole capability surface, CQRS style: `queries/` for reads
+  that return display-ready read models, `commands/` for writes. It is headless: no Ink, no
+  React, no prompts. It wraps the OpenSearch client, so the transport can change without
+  touching the frontend.
+- The frontend (`src/frontend/`) is presentation only: reusable `components/`, one screen per
+  user flow in `screens/`, and the REPL `shell/`. It drives the engine through the facade
+  `src/engine/engine.ts`, the only engine module it may import.
+- Destructive commands split into plan and execute. `plan` returns the preview the frontend
+  shows for confirmation; `execute` performs the planned change.
+- Inside the engine: types live with the module that owns them. `config` (profiles and the
+  configuration file) imports nothing, `connection` imports the config, `queries` import config
+  and connection, `commands` may also reuse queries.
+- Records and services: data that crosses a serialization or rendering boundary (profiles, read
+  models, plans) is a plain interface without methods, because it round-trips through JSON and
+  React props. Anything with dependencies or lifecycle (the profile store, future command
+  orchestration) is a class.
+- `components/` import no engine; data arrives as props. Only the entry imports the shell.
 
 ## Mode
 
@@ -52,13 +75,13 @@ and holds it in memory only. Password storage may be revisited later.
 ## Credential resolution
 
 - Connection settings come from the saved profile.
-- With no saved profile, the connection wizard runs and saves one.
+- With no saved profile, the REPL suggests running `/profile add`, which saves one.
 - When the profile has a username, osctl prompts for the password at connect.
 - There are no environment variable overrides and no command-line connection flags.
 
 ## Safety rules
 
-- Destructive commands (`index rm`, `alias rm`, `template rm`, `policy rm`) list the affected
+- Destructive commands (`/index rm`, `/alias rm`, `/template rm`, `/policy rm`) list the affected
   resources and totals, then ask for confirmation. There is no flag to skip confirmation.
 - The status bar always shows the active profile and cluster health, because destructive commands
   on the wrong cluster are the main operational risk.

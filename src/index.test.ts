@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
 
-test('placeholder', () => {
+test('placeholder until the first real unit lands', () => {
   expect(true).toBe(true);
 });
