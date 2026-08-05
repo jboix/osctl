@@ -108,3 +108,18 @@ test('setDefault returns undefined and changes nothing for unknown names', () =>
   expect(store.setDefault('nope')).toBe(undefined);
   expect(store.load().defaultProfile).toBe('prod');
 });
+
+test('remove deletes the profile and clears a matching default', () => {
+  seed();
+  expect(store.remove('prod')).toBe(true);
+  const config = store.load();
+  expect(config.profiles.map((profile) => profile.name)).toEqual(['local']);
+  expect(config.defaultProfile).toBe(undefined);
+});
+
+test('remove keeps an unrelated default and reports unknown names', () => {
+  seed();
+  expect(store.remove('local')).toBe(true);
+  expect(store.load().defaultProfile).toBe('prod');
+  expect(store.remove('nope')).toBe(false);
+});

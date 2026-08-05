@@ -5,8 +5,9 @@ import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
 import { ProfileStore } from '../../engine/engine';
 import { runAliasLs, runAliasRm } from './alias-commands';
+import { runClusterInfo } from './cluster-commands';
 import type { Command, CommandContext } from './command-types';
-import { requireConnection } from './command-utils';
+import { matchesPattern, requireConnection } from './command-utils';
 import {
   runIndexCreate,
   runIndexLs,
@@ -115,6 +116,11 @@ const COMMANDS: Command[] = [
     run: (context, args) => void runPolicyExplain(context, args[0]),
   },
   {
+    name: '/cluster info',
+    description: 'Show the cluster health, blocks, and disk usage',
+    run: (context) => void runClusterInfo(context),
+  },
+  {
     name: '/profile add',
     description: 'Add a cluster profile and connect to it',
     run: (context) => context.session.startProfileAdd(),
@@ -128,6 +134,11 @@ const COMMANDS: Command[] = [
     name: '/profile default',
     description: 'Set the default profile: /profile default [name]',
     run: runProfileDefault,
+  },
+  {
+    name: '/profile rm',
+    description: 'Delete profiles from a selection: /profile rm [pattern]',
+    run: (context, args) => runProfileRm(context, args[0]),
   },
   {
     name: '/help',
@@ -207,6 +218,30 @@ function runProfileDefault(context: CommandContext, args: string[]): void {
     return;
   }
   context.session.push(<Text>Default profile set to "{name}".</Text>);
+}
+
+/**
+ * Opens the deletion screen for the profiles matching the pattern.
+ *
+ * @param context - What the command can act on.
+ * @param pattern - A profile name or pattern; all profiles when omitted.
+ * @returns Nothing.
+ */
+function runProfileRm(context: CommandContext, pattern?: string): void {
+  const profiles = new ProfileStore()
+    .load()
+    .profiles.filter((profile) => matchesPattern(profile.name, pattern));
+  if (profiles.length === 0) {
+    context.session.push(<Text dimColor>No profiles match.</Text>);
+    return;
+  }
+  context.session.startRemove({
+    kind: 'profile',
+    items: profiles.map((profile) => ({
+      label: `${profile.name.padEnd(16)} ${profile.host}`,
+      value: profile.name,
+    })),
+  });
 }
 
 /**

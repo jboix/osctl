@@ -46,6 +46,7 @@ export function useSession(header: ReactNode): Session {
   const state = useSessionState();
   const deps: SessionDeps = { ...state, push, navigate };
   useStartup(deps);
+  useStatusRefresh(state.connection, state.setStatus);
   return { outputs, push, ...state, ...createActions(deps) };
 }
 
@@ -118,6 +119,56 @@ function useStartup(deps: SessionDeps): void {
       void start(deps);
     }
   }, [deps]);
+}
+
+/**
+ * Refreshes the status bar every 30 seconds while connected, so a stale
+ * health status or a lost cluster becomes visible.
+ *
+ * @param connection - The live connection, when there is one.
+ * @param setStatus - Updates the status bar values.
+ * @returns Nothing.
+ */
+function useStatusRefresh(
+  connection: Connection | undefined,
+  setStatus: (status: StatusBarProps) => void,
+): void {
+  useEffect(() => {
+    if (connection === undefined) {
+      return;
+    }
+    const timer = setInterval(() => {
+      void refreshStatus(connection, setStatus);
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [connection, setStatus]);
+}
+
+/**
+ * Reads the health once and updates the status bar, silently.
+ *
+ * @param connection - The live connection.
+ * @param setStatus - Updates the status bar values.
+ * @returns Nothing.
+ */
+async function refreshStatus(
+  connection: Connection,
+  setStatus: (status: StatusBarProps) => void,
+): Promise<void> {
+  const base = {
+    profileName: connection.profile.name,
+    host: connection.profile.host,
+  };
+  try {
+    const result = await health(connection);
+    setStatus({
+      ...base,
+      clusterName: result.clusterName,
+      status: result.status,
+    });
+  } catch {
+    setStatus({ ...base, status: 'unreachable' });
+  }
 }
 
 /**

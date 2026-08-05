@@ -44,6 +44,12 @@ typing; the slash form is the official one.
 | `/policy rm <name>`         | Delete a policy after confirmation                                                         | `DELETE /_plugins/_ism/policies/{name}`      |
 | `/policy explain [pattern]` | Show ISM state per index: current state, age, next transition, failed actions              | `GET /_plugins/_ism/explain/{index}`         |
 
+## cluster
+
+| Command         | Description                                      | Backing API                                              |
+|-----------------|--------------------------------------------------|----------------------------------------------------------|
+| `/cluster info` | Show the health, active blocks, and disk usage   | `_cluster/health`, `_cluster/state/blocks`, `_cat/allocation` |
+
 ## session
 
 | Command                    | Description                                                  |
@@ -51,6 +57,7 @@ typing; the slash form is the official one.
 | `/profile add`             | Run the connect wizard: add a profile and connect to it      |
 | `/profile ls`              | List the profiles as a select; picking one switches to it    |
 | `/profile default [name]`  | Set the default profile, interactively when no name is given |
+| `/profile rm [pattern]`    | Delete profiles from a selection                             |
 | `/refresh`                 | Reload the cached resource names used for autocomplete       |
 | `/help`                    | Show commands and usage tips                                 |
 | `/version`                 | Print the osctl version                                      |

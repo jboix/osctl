@@ -8,6 +8,7 @@ import {
   deletePolicy,
   deleteTemplate,
   describeFailure,
+  ProfileStore,
 } from '../../engine/engine';
 import { FailureBlock } from '../components/failure-block';
 import type { RemoveState, SessionActions, SessionDeps } from './session-types';
@@ -34,11 +35,38 @@ export function createRemoveActions(
       const state = deps.removeState;
       deps.setRemoveState(undefined);
       deps.navigate('/');
-      if (state !== undefined && deps.connection !== undefined) {
+      if (state === undefined) {
+        return;
+      }
+      if (state.kind === 'profile') {
+        removeProfiles(names, deps);
+        return;
+      }
+      if (deps.connection !== undefined) {
         void finishRemove(state, names, deps.connection, deps);
       }
     },
   };
+}
+
+/**
+ * Deletes the confirmed profiles and reports each outcome.
+ *
+ * @param names - The confirmed profile names.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+function removeProfiles(names: string[], deps: SessionDeps): void {
+  const store = new ProfileStore();
+  for (const name of names) {
+    deps.push(
+      store.remove(name) ? (
+        <Text color="green">✔ Profile "{name}" deleted.</Text>
+      ) : (
+        <Text color="yellow">No profile named "{name}".</Text>
+      ),
+    );
+  }
 }
 
 /**
@@ -51,7 +79,7 @@ export function createRemoveActions(
  * @returns Nothing.
  */
 async function finishRemove(
-  state: RemoveState,
+  state: Exclude<RemoveState, { kind: 'profile' }>,
   names: string[],
   connection: Connection,
   deps: SessionDeps,

@@ -16,6 +16,8 @@ export type { FailureReport } from './connection/failure';
 export { describeFailure } from './connection/failure';
 export type { AliasInfo } from './queries/aliases';
 export { listAliases } from './queries/aliases';
+export type { ClusterInfo } from './queries/cluster';
+export { clusterInfo } from './queries/cluster';
 export type { Health } from './queries/health';
 export { health } from './queries/health';
 export type { IndexInfo } from './queries/indices';

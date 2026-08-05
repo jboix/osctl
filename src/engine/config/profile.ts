@@ -113,6 +113,29 @@ export class ProfileStore {
   }
 
   /**
+   * Deletes the named profile. The default marker is cleared when it pointed
+   * at the deleted profile.
+   *
+   * @param name - The profile name.
+   * @returns Whether a profile was deleted.
+   */
+  remove(name: string): boolean {
+    const config = this.load();
+    const remaining = config.profiles.filter(
+      (profile) => profile.name !== name,
+    );
+    if (remaining.length === config.profiles.length) {
+      return false;
+    }
+    this.save({
+      defaultProfile:
+        config.defaultProfile === name ? undefined : config.defaultProfile,
+      profiles: remaining,
+    });
+    return true;
+  }
+
+  /**
    * Makes the named profile the default.
    *
    * @param name - The profile name.

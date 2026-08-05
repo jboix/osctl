@@ -41,7 +41,8 @@ export type RemoveState =
   | {
       kind: 'template' | 'policy';
       items: { label: string; value: string }[];
-    };
+    }
+  | { kind: 'profile'; items: { label: string; value: string }[] };
 
 /** The actions the shell can trigger. */
 export interface SessionActions {

@@ -164,6 +164,12 @@ function RemoveRoute(props: { session: Session }): ReactElement {
   );
 }
 
+const NOUNS = {
+  template: 'templates',
+  policy: 'policies',
+  profile: 'profiles',
+} as const;
+
 /**
  * Renders the removal of name based resources: templates and policies.
  *
@@ -174,7 +180,7 @@ function RemoveRoute(props: { session: Session }): ReactElement {
  * @returns The removal screen element.
  */
 function NamedRemove(props: {
-  kind: 'template' | 'policy';
+  kind: 'template' | 'policy' | 'profile';
   items: { label: string; value: string }[];
   session: Session;
 }): ReactElement {
@@ -189,7 +195,7 @@ function NamedRemove(props: {
       items={props.items}
       onCancel={props.session.cancelRemove}
       onConfirm={props.session.executeRemove}
-      title={`Delete ${props.kind === 'template' ? 'templates' : 'policies'}`}
+      title={`Delete ${NOUNS[props.kind]}`}
     />
   );
 }
