@@ -6,11 +6,13 @@ import packageJson from '../../../package.json';
 import {
   type Connection,
   createIndex,
+  describeFailure,
   type IndexInfo,
   listIndices,
   ProfileStore,
   rollover,
 } from '../../engine/engine';
+import { FailureBlock } from '../components/failure-block';
 import { Table } from '../components/table';
 import type { Session } from './session';
 
@@ -129,7 +131,7 @@ async function runIndexLs(
       ),
     );
   } catch (error) {
-    context.session.push(<Text color="red">✖ {String(error)}</Text>);
+    context.session.push(<FailureBlock {...describeFailure(error)} />);
   }
 }
 
@@ -156,7 +158,7 @@ async function runIndexRm(
     }
     context.session.startIndexRm(indices);
   } catch (error) {
-    context.session.push(<Text color="red">✖ {String(error)}</Text>);
+    context.session.push(<FailureBlock {...describeFailure(error)} />);
   }
 }
 
@@ -192,7 +194,7 @@ async function runIndexCreate(
       );
     }
   } catch (error) {
-    context.session.push(<Text color="red">✖ {String(error)}</Text>);
+    context.session.push(<FailureBlock {...describeFailure(error)} />);
   }
 }
 
@@ -232,7 +234,7 @@ async function runIndexRollover(
       ),
     );
   } catch (error) {
-    context.session.push(<Text color="red">✖ {String(error)}</Text>);
+    context.session.push(<FailureBlock {...describeFailure(error)} />);
   }
 }
 

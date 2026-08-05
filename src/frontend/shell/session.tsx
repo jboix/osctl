@@ -8,11 +8,14 @@ import {
   type Connection,
   createConnection,
   deleteIndices,
+  describeFailure,
+  type FailureReport,
   health,
   type IndexInfo,
   type Profile,
   ProfileStore,
 } from '../../engine/engine';
+import { FailureBlock } from '../components/failure-block';
 import { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
@@ -49,6 +52,8 @@ interface SessionActions {
   submitProfileAdd: (answers: ProfileAnswers) => void;
   /** Submits the password for the pending profile. */
   submitPassword: (password: string) => void;
+  /** Closes the password prompt without connecting. */
+  cancelPassword: () => void;
   /** Connects to the given profile, asking for its password when needed. */
   switchProfile: (profile: Profile) => void;
 }
@@ -191,6 +196,10 @@ function createActions(deps: SessionDeps): SessionActions {
         void verifyPassword(deps.pendingProfile, password, deps);
       }
     },
+    cancelPassword: (): void => {
+      deps.setPendingProfile(undefined);
+      deps.navigate('/');
+    },
     switchProfile: (profile: Profile): void => {
       void connectTo(profile, deps);
     },
@@ -247,7 +256,7 @@ async function finishIndexRm(
       </Text>,
     );
   } catch (error) {
-    deps.push(<Text color="red">✖ {String(error)}</Text>);
+    deps.push(<FailureBlock {...describeFailure(error)} />);
   }
 }
 
@@ -286,7 +295,7 @@ async function connectTo(profile: Profile, deps: SessionDeps): Promise<void> {
   }
   const failure = await probe(profile, undefined, deps);
   if (failure !== undefined) {
-    deps.push(<Text color="red">✖ {failure}</Text>);
+    deps.push(<FailureBlock {...failure} />);
   }
 }
 
@@ -305,7 +314,7 @@ async function verifyPassword(
 ): Promise<void> {
   const failure = await probe(profile, password, deps);
   if (failure !== undefined) {
-    deps.push(<Text color="red">✖ {failure}</Text>);
+    deps.push(<FailureBlock {...failure} />);
     deps.navigate('/password');
   }
 }
@@ -329,7 +338,7 @@ async function finishProfileAdd(
   };
   const failure = await probe(profile, answers.password, deps);
   if (failure !== undefined) {
-    deps.setAddProfileState({ answers, error: failure });
+    deps.setAddProfileState({ answers, error: failure.message });
     deps.navigate('/profile/add');
     return;
   }
@@ -345,13 +354,13 @@ async function finishProfileAdd(
  * @param profile - The profile to connect to.
  * @param password - The session password, omitted for clusters without auth.
  * @param deps - The session state setters and the navigation.
- * @returns Undefined on success, the failure message otherwise.
+ * @returns Undefined on success, the failure report otherwise.
  */
 async function probe(
   profile: Profile,
   password: string | undefined,
   deps: SessionDeps,
-): Promise<string | undefined> {
+): Promise<FailureReport | undefined> {
   try {
     const connection = createConnection(profile, password);
     const result = await health(connection);
@@ -369,6 +378,6 @@ async function probe(
     );
     return undefined;
   } catch (error) {
-    return String(error);
+    return describeFailure(error);
   }
 }

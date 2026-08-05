@@ -26,8 +26,8 @@ export interface ProfileSelectProps {
  * @returns The picker element.
  */
 export function ProfileSelect(props: ProfileSelectProps): ReactElement {
-  useInput((_input, key) => {
-    if (key.escape) {
+  useInput((input, key) => {
+    if (key.escape || input === 'q' || (key.ctrl && input === 'c')) {
       props.onCancel();
     }
   });
@@ -38,7 +38,7 @@ export function ProfileSelect(props: ProfileSelectProps): ReactElement {
       flexDirection="column"
       paddingX={1}
     >
-      <Text color="cyan">{props.title} (esc to cancel)</Text>
+      <Text color="cyan">{props.title} (esc, q, or ctrl+c to cancel)</Text>
       {props.profiles.length === 0 ? (
         <Text color="yellow">No profiles saved. Run /profile add.</Text>
       ) : (

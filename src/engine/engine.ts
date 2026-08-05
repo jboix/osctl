@@ -8,6 +8,8 @@ export type { Config, Profile } from './config/profile';
 export { defaultConfigPath, ProfileStore } from './config/profile';
 export type { Connection } from './connection/connection';
 export { createConnection } from './connection/connection';
+export type { FailureReport } from './connection/failure';
+export { describeFailure } from './connection/failure';
 export type { Health } from './queries/health';
 export { health } from './queries/health';
 export type { IndexInfo } from './queries/indices';

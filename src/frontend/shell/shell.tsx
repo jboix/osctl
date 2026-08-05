@@ -197,6 +197,7 @@ function PasswordRoute(props: { session: Session }): ReactElement {
   return (
     <PasswordPrompt
       host={profile.host}
+      onCancel={props.session.cancelPassword}
       onSubmit={props.session.submitPassword}
       username={profile.username ?? ''}
     />
@@ -283,7 +284,7 @@ function listConsumes(key: Key, deps: KeystrokeDeps): boolean {
     return true;
   }
   if (key.return) {
-    runHighlighted(deps);
+    completeHighlighted(deps);
     return true;
   }
   deps.suggestions.blur();
@@ -291,19 +292,19 @@ function listConsumes(key: Key, deps: KeystrokeDeps): boolean {
 }
 
 /**
- * Runs the highlighted command and clears the input.
+ * Writes the highlighted command into the input, without submitting it,
+ * because many commands take further arguments.
  *
  * @param deps - The editor, the suggestions, and the command context.
  * @returns Nothing.
  */
-function runHighlighted(deps: KeystrokeDeps): void {
+function completeHighlighted(deps: KeystrokeDeps): void {
   const name = deps.suggestions.items[deps.suggestions.highlight]?.name;
   if (name === undefined) {
     return;
   }
   deps.suggestions.blur();
-  deps.setEditor(deps.editor.withValue('').remember(name));
-  runLine(name, deps.context);
+  deps.setEditor(deps.editor.withValue(`${name} `));
 }
 
 /**
@@ -418,7 +419,7 @@ function SuggestionList(props: Suggestions): ReactElement | null {
       ))}
       <Text dimColor italic>
         {props.focused
-          ? 'up and down move, enter runs, tab returns to the input'
+          ? 'up and down move, enter picks, tab returns to the input'
           : 'tab selects a command'}
       </Text>
     </Box>

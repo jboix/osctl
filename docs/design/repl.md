@@ -6,7 +6,8 @@
 
 - With no saved profile, the REPL suggests running `/profile add`.
 - With one or more saved profiles, the REPL connects to the default profile and prompts for its
-  password when the profile has a username. A wrong password re-asks the password.
+  password when the profile has a username. A wrong password re-asks the password. Escape or
+  ctrl+c closes the prompt without connecting.
 
 ## The /profile add wizard
 
@@ -17,7 +18,7 @@
   memory for the session, and is never written to disk.
 - The wizard tests the connection before saving. On success it saves the profile as the default.
 - On failure it returns to the host step with the answers kept and the error shown.
-- Escape cancels the wizard.
+- Escape or ctrl+c cancels the wizard.
 
 ## Layout
 
@@ -31,8 +32,8 @@
   is optional; the list shows the names without it.
 - Tab moves the focus between the input and the list. On an empty input, tab lists every
   command.
-- With the list focused: up and down move the highlight, enter runs the highlighted command,
-  and escape or typing returns the focus to the input.
+- With the list focused: up and down move the highlight, enter writes the highlighted command
+  into the input without submitting it, and escape or typing returns the focus to the input.
 - With the input focused, the arrows browse the history and enter submits the typed line.
 
 ## Line editing
@@ -60,7 +61,7 @@
 
 Used by `/index rm` when the pattern matches more than one index.
 
-- Space toggles the highlighted row. `a` toggles all rows.
+- Space toggles the highlighted row. `a` toggles all rows. Escape, `q`, or ctrl+c cancels.
 - Each row shows name, size, doc count, and a write-index marker.
 - The confirmation step shows the count of selected indices and their total size.
 

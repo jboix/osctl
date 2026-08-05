@@ -33,8 +33,8 @@ export function ProfileAddWizard(props: ProfileAddWizardProps): ReactElement {
   const [machine, setMachine] = useState(() =>
     ProfileAddMachine.start(props.initialAnswers),
   );
-  useInput((_input, key) => {
-    if (key.escape) {
+  useInput((input, key) => {
+    if (key.escape || (key.ctrl && input === 'c')) {
       props.onCancel();
     }
   });
@@ -53,7 +53,7 @@ export function ProfileAddWizard(props: ProfileAddWizardProps): ReactElement {
       flexDirection="column"
       paddingX={1}
     >
-      <Text color="cyan">Connect to a cluster (esc to cancel)</Text>
+      <Text color="cyan">Connect to a cluster (esc or ctrl+c to cancel)</Text>
       {props.error !== undefined && <Text color="red">✖ {props.error}</Text>}
       <QuestionView
         key={machine.step}

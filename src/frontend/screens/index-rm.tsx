@@ -25,8 +25,8 @@ export interface IndexRmScreenProps {
  */
 export function IndexRmScreen(props: IndexRmScreenProps): ReactElement {
   const [chosen, setChosen] = useState<string[] | undefined>();
-  useInput((_input, key) => {
-    if (key.escape) {
+  useInput((input, key) => {
+    if (key.escape || input === 'q' || (key.ctrl && input === 'c')) {
       props.onCancel();
     }
   });
@@ -37,7 +37,7 @@ export function IndexRmScreen(props: IndexRmScreenProps): ReactElement {
       flexDirection="column"
       paddingX={1}
     >
-      <Text color="red">Delete indices (esc to cancel)</Text>
+      <Text color="red">Delete indices (esc, q, or ctrl+c to cancel)</Text>
       {chosen === undefined ? (
         <Selection
           onCancel={props.onCancel}
