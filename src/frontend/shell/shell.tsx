@@ -1,8 +1,8 @@
-// The REPL frame: scrollback above, routed input area, status bar below.
+// The shell frame: scrollback above, routed input area, status bar below.
 
 import { Box, Static, useStdout } from 'ink';
 import type { ReactElement } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import packageJson from '../../../package.json';
 import { Header } from '../components/header';
 import { StatusBar } from '../components/status-bar';
@@ -10,16 +10,16 @@ import { ScreenRoutes } from './screen-routes';
 import { type OutputItem, useSession } from './session';
 
 /**
- * Renders the REPL shell.
+ * Renders the shell.
  *
  * @returns The root element of the frontend.
  */
 export function Shell(): ReactElement {
   const session = useSession(<Header version={packageJson.version} />);
-  const generation = useResizeRedraw();
+  useResizeRedraw(session.redraw);
   return (
     <Box flexDirection="column" paddingX={1}>
-      <Static items={session.outputs} key={generation}>
+      <Static items={session.outputs} key={session.generation}>
         {(item: OutputItem) => (
           <Box key={item.id} paddingX={1}>
             {item.node}
@@ -39,20 +39,15 @@ export function Shell(): ReactElement {
  * and breaks the layout, so the viewport is cleared and the scrollback is
  * re-rendered at the new width.
  *
- * @returns The scrollback generation, bumped on every resize.
+ * @param redraw - Clears the terminal and repaints everything.
+ * @returns Nothing.
  */
-function useResizeRedraw(): number {
-  const { stdout, write } = useStdout();
-  const [generation, setGeneration] = useState(0);
+function useResizeRedraw(redraw: () => void): void {
+  const { stdout } = useStdout();
   useEffect(() => {
-    const redraw = (): void => {
-      write('\u001B[2J\u001B[H');
-      setGeneration((current) => current + 1);
-    };
     stdout.on('resize', redraw);
     return () => {
       stdout.off('resize', redraw);
     };
-  }, [stdout, write]);
-  return generation;
+  }, [stdout, redraw]);
 }

@@ -7,19 +7,19 @@ Thanks for contributing. Participation is governed by the
 
 ```sh
 bun install
-bun run verify    # the whole gate: lint, typecheck, test, build
+bun run verify    # the whole gate: lint, arch, knip, typecheck, test, build
 ```
 
 `verify` runs the whole gate:
 
-| Step                | Tool                  | Checks                                      |
-|---------------------|-----------------------|---------------------------------------------|
-| `bun run lint`      | Biome (`biome.json`)  | Formatting, lint rules, complexity limits   |
-| `bun run arch`      | dependency-cruiser    | Layer boundaries, cycles                    |
-| `bun run knip`      | knip                  | Dead code, unused exports and dependencies  |
-| `bun run typecheck` | tsc (`--noEmit`)      | Type errors                                 |
-| `bun run test`      | bun test              | Unit tests                                  |
-| `bun run build`     | `bun build --compile` | The binary compiles                         |
+| Step                | Tool                  | Checks                                     |
+|---------------------|-----------------------|--------------------------------------------|
+| `bun run lint`      | Biome (`biome.json`)  | Formatting, lint rules, complexity limits  |
+| `bun run arch`      | dependency-cruiser    | Layer boundaries, cycles                   |
+| `bun run knip`      | knip                  | Dead code, unused exports and dependencies |
+| `bun run typecheck` | tsc (`--noEmit`)      | Type errors                                |
+| `bun run test`      | bun test              | Unit tests                                 |
+| `bun run build`     | `bun build --compile` | The binary compiles                        |
 
 Requirements: Bun 1.2 or later. Bun runs the TypeScript source directly, so there is no build
 step while developing. `bun run format` applies Biome's formatting.
@@ -45,18 +45,18 @@ Write the subject line for the changelog reader, not the diff reader.
 
 ## Changing behavior
 
-Read the design docs in [docs/design/](./design/) before changing behavior. Those four files are
-the contract. Here is a summary of the design choices:
+The command reference in [docs/design/commands.md](./design/commands.md) documents how osctl
+behaves today. Update it in the same change as the code. The design choices:
 
-- The REPL is the only mode.
+- osctl is interactive only. There is no non-interactive command mode.
 - Commands follow the noun-verb form.
 - The npm package runs on Node, so `src/` uses no Bun-only APIs. Bun APIs are allowed in
   `scripts/` and in tests.
 - Configuration is saved profiles only. Passwords are never written to disk.
 - Destructive commands preview their effect and confirm.
+- JSON documents (templates, policies, alias actions, index bodies) are edited in `$EDITOR`
+  and confirmed with a diff or a summary before anything is sent.
 - `/index rollover` reapplies aliases missing on the new head.
-
-Update the design doc in the same change as the code, if it is needed.
 
 ## Integration environment
 

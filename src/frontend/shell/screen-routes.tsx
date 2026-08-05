@@ -6,12 +6,12 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router';
 import { ProfileStore } from '../../engine/engine';
 import { PasswordPrompt } from '../components/password-prompt';
 import { AliasRmScreen } from '../screens/alias-rm';
+import { DocPick } from '../screens/doc-pick';
+import { EditPreview } from '../screens/edit-preview';
 import { IndexRmScreen } from '../screens/index-rm';
-import { JsonApplyScreen } from '../screens/json-apply';
 import { ProfileAddWizard } from '../screens/profile-add';
 import { ProfileSelect } from '../screens/profile-select';
 import { RemoveScreen } from '../screens/remove';
-import { applyPresentation } from './apply-actions';
 import { CommandInput } from './command-input';
 import type { Session } from './session';
 
@@ -37,7 +37,14 @@ const SCREENS: {
     path: '/password',
     render: (session) => <PasswordRoute session={session} />,
   },
-  { path: '/apply', render: (session) => <ApplyRoute session={session} /> },
+  {
+    path: '/edit/pick',
+    render: (session) => <EditPickRoute session={session} />,
+  },
+  {
+    path: '/edit/preview',
+    render: (session) => <EditPreviewRoute session={session} />,
+  },
   {
     path: '/remove',
     render: (session) => <RemoveRoute session={session} />,
@@ -201,25 +208,47 @@ function NamedRemove(props: {
 }
 
 /**
- * Renders the /apply screen, or returns home without a target.
+ * Renders the /edit/pick screen, or returns home without a picker.
  *
  * @param props - The component props.
  * @param props.session - The running session.
- * @returns The apply screen element.
+ * @returns The document picker element.
  */
-function ApplyRoute(props: { session: Session }): ReactElement {
-  const state = props.session.applyState;
+function EditPickRoute(props: { session: Session }): ReactElement {
+  const state = props.session.editPick;
   if (state === undefined) {
     return <Navigate to="/" />;
   }
-  const presentation = applyPresentation(state);
   return (
-    <JsonApplyScreen
-      allowEmpty={presentation.allowEmpty}
-      docsUrl={presentation.docsUrl}
-      onCancel={props.session.cancelApply}
-      onConfirm={props.session.executeApply}
-      title={presentation.title}
+    <DocPick
+      allowNew={state.action === 'apply'}
+      names={state.names}
+      noun={state.kind}
+      onCancel={props.session.cancelEdit}
+      onPick={props.session.pickEditTarget}
+      title={state.kind === 'template' ? 'Templates' : 'Policies'}
+    />
+  );
+}
+
+/**
+ * Renders the /edit/preview screen, or returns home without an edit.
+ *
+ * @param props - The component props.
+ * @param props.session - The running session.
+ * @returns The edit preview element.
+ */
+function EditPreviewRoute(props: { session: Session }): ReactElement {
+  const state = props.session.editPreview;
+  if (state === undefined) {
+    return <Navigate to="/" />;
+  }
+  return (
+    <EditPreview
+      lines={state.lines}
+      onCancel={props.session.cancelEdit}
+      onConfirm={props.session.confirmEdit}
+      title={state.title}
     />
   );
 }

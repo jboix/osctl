@@ -1,6 +1,6 @@
 {
   "name": "osctl",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An interactive terminal client for OpenSearch operations",
   "license": "MIT",
   "author": "Josep Boix Requesens",
@@ -15,7 +15,6 @@
   "keywords": [
     "opensearch",
     "cli",
-    "repl",
     "terminal",
     "ink"
   ],
@@ -61,8 +60,8 @@
     "typescript": "^6"
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
     "@opensearch-project/opensearch": "^3.6.0",
+    "diff": "^9.0.0",
     "ink": "^7.1.1",
     "ink-select-input": "^6.2.0",
     "ink-text-input": "^6.0.0",

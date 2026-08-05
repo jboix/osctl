@@ -34,7 +34,7 @@ module.exports = {
       comment:
         'The engine renders nothing. Ink, React, and prompt libraries are frontend-only.',
       from: { path: '^src/engine/' },
-      to: { path: '^node_modules/(ink|react|@clack)' },
+      to: { path: '^node_modules/(ink|react)' },
     },
     {
       name: 'engine-imports-no-frontend',

@@ -1,11 +1,7 @@
 // The /template command runners.
 
 import { Text } from 'ink';
-import {
-  describeFailure,
-  getTemplate,
-  listTemplates,
-} from '../../engine/engine';
+import { describeFailure, listTemplates } from '../../engine/engine';
 import { FailureBlock } from '../components/failure-block';
 import { Table } from '../components/table';
 import type { CommandContext } from './command-types';
@@ -15,18 +11,24 @@ import { matchesPattern, requireConnection } from './command-utils';
  * Lists the index templates as a table block.
  *
  * @param context - What the command can act on.
+ * @param pattern - A template name or pattern; all templates when omitted.
  * @returns Nothing.
  */
-export async function runTemplateLs(context: CommandContext): Promise<void> {
+export async function runTemplateLs(
+  context: CommandContext,
+  pattern?: string,
+): Promise<void> {
   const connection = requireConnection(context);
   if (connection === undefined) {
     return;
   }
   try {
-    const templates = await listTemplates(connection);
+    const templates = (await listTemplates(connection)).filter((template) =>
+      matchesPattern(template.name, pattern),
+    );
     context.session.push(
       templates.length === 0 ? (
-        <Text dimColor>No templates.</Text>
+        <Text dimColor>No templates match.</Text>
       ) : (
         <Table
           columns={[
@@ -50,61 +52,29 @@ export async function runTemplateLs(context: CommandContext): Promise<void> {
 }
 
 /**
- * Prints one template, pretty printed.
+ * Prints the named template, or opens the picker without a name.
  *
  * @param context - What the command can act on.
- * @param name - The template name.
+ * @param name - The template name; a picker opens when omitted.
  * @returns Nothing.
  */
-export async function runTemplateShow(
-  context: CommandContext,
-  name?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  if (name === undefined) {
-    context.session.push(
-      <Text color="yellow">Usage: /template show {'<name>'}.</Text>,
-    );
-    return;
-  }
-  try {
-    const template = await getTemplate(connection, name);
-    context.session.push(
-      template === undefined ? (
-        <Text color="yellow">No template named "{name}".</Text>
-      ) : (
-        <Text>{JSON.stringify(template, null, 2)}</Text>
-      ),
-    );
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+export function runTemplateShow(context: CommandContext, name?: string): void {
+  if (requireConnection(context) !== undefined) {
+    context.session.startShow('template', name);
   }
 }
 
 /**
- * Opens the JSON input for the named template.
+ * Edits the named template, or opens the picker without a name.
  *
  * @param context - What the command can act on.
- * @param name - The template name.
+ * @param name - The template name; a picker opens when omitted.
  * @returns Nothing.
  */
-export async function runTemplateApply(
-  context: CommandContext,
-  name?: string,
-): Promise<void> {
-  if (requireConnection(context) === undefined) {
-    return;
+export function runTemplateApply(context: CommandContext, name?: string): void {
+  if (requireConnection(context) !== undefined) {
+    context.session.startEdit('template', name);
   }
-  if (name === undefined) {
-    context.session.push(
-      <Text color="yellow">Usage: /template apply {'<name>'}.</Text>,
-    );
-    return;
-  }
-  context.session.startApply({ kind: 'template', name });
 }
 
 /**

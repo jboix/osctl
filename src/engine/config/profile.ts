@@ -18,7 +18,7 @@ export interface Profile {
 
 /** The content of the configuration file (`~/.config/osctl/config.json`). */
 export interface Config {
-  /** The name of the profile the REPL connects to at startup. */
+  /** The name of the profile osctl connects to at startup. */
   defaultProfile?: string;
   /** The saved profiles. */
   profiles: Profile[];
@@ -80,7 +80,7 @@ export class ProfileStore {
   }
 
   /**
-   * Resolves the profile the REPL connects to at startup.
+   * Resolves the profile osctl connects to at startup.
    *
    * @returns The profile named by `defaultProfile`, otherwise the first
    * profile, otherwise undefined.

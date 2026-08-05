@@ -15,18 +15,24 @@ import { matchesPattern, requireConnection } from './command-utils';
  * Shows the alias tree.
  *
  * @param context - What the command can act on.
+ * @param pattern - An alias name or pattern; all aliases when omitted.
  * @returns Nothing.
  */
-export async function runAliasLs(context: CommandContext): Promise<void> {
+export async function runAliasLs(
+  context: CommandContext,
+  pattern?: string,
+): Promise<void> {
   const connection = requireConnection(context);
   if (connection === undefined) {
     return;
   }
   try {
-    const aliases = await listAliases(connection);
+    const aliases = (await listAliases(connection)).filter((alias) =>
+      matchesPattern(alias.name, pattern),
+    );
     context.session.push(
       aliases.length === 0 ? (
-        <Text dimColor>No aliases.</Text>
+        <Text dimColor>No aliases match.</Text>
       ) : (
         <AliasTree aliases={aliases} />
       ),

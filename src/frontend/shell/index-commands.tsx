@@ -102,7 +102,7 @@ export async function runIndexCreate(
     );
   }
   if (writeAlias === undefined) {
-    context.session.startApply({ kind: 'index', name });
+    context.session.startIndexEdit(name);
     return;
   }
   try {

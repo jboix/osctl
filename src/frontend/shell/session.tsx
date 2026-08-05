@@ -1,6 +1,6 @@
-// Session state for the REPL: startup, scrollback outputs, and the status line.
+// Session state for the shell: startup, scrollback outputs, and the status line.
 
-import { Text } from 'ink';
+import { Text, useStdin, useStdout } from 'ink';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -20,7 +20,8 @@ import type { ProfileAnswers } from '../screens/profile-add-machine';
 
 import type {
   AddProfileState,
-  JsonApplyState,
+  EditPickState,
+  EditPreviewState,
   OutputItem,
   RemoveState,
   Session,
@@ -31,7 +32,7 @@ import type {
 
 export type { OutputItem, Session };
 
-import { createApplyActions } from './apply-actions';
+import { createEditActions } from './edit-actions';
 import { createRemoveActions } from './remove-actions';
 
 /**
@@ -42,9 +43,10 @@ import { createRemoveActions } from './remove-actions';
  */
 export function useSession(header: ReactNode): Session {
   const navigate = useNavigate();
+  const { setRawMode } = useStdin();
   const { outputs, push } = useOutputs(header);
   const state = useSessionState();
-  const deps: SessionDeps = { ...state, push, navigate };
+  const deps: SessionDeps = { ...state, push, navigate, setRawMode };
   useStartup(deps);
   useStatusRefresh(state.connection, state.setStatus);
   return { outputs, push, ...state, ...createActions(deps) };
@@ -66,8 +68,27 @@ function useSessionState(): SessionState {
     setConnection,
     editor,
     setEditor,
+    ...useRedraw(),
     ...useScreenState(),
   };
+}
+
+/**
+ * Owns the scrollback generation. Bumping it after a clear repaints the
+ * scrollback at the current width, after a resize or an external editor.
+ * The cursor is re-hidden: an external editor shows it on exit and Ink
+ * would leave it blinking under the frame.
+ *
+ * @returns The generation and the redraw function.
+ */
+function useRedraw(): { generation: number; redraw: () => void } {
+  const { write } = useStdout();
+  const [generation, setGeneration] = useState(0);
+  const redraw = useCallback(() => {
+    write('\u001B[2J\u001B[H\u001B[?25l');
+    setGeneration((current) => current + 1);
+  }, [write]);
+  return { generation, redraw };
 }
 
 /** The screen related part of the session state. */
@@ -79,6 +100,8 @@ type ScreenState = Omit<
   | 'setConnection'
   | 'editor'
   | 'setEditor'
+  | 'generation'
+  | 'redraw'
 >;
 
 /**
@@ -90,7 +113,10 @@ function useScreenState(): ScreenState {
   const [pendingProfile, setPendingProfile] = useState<Profile | undefined>();
   const [addState, setAddProfileState] = useState<AddProfileState>();
   const [removeState, setRemoveState] = useState<RemoveState | undefined>();
-  const [applyState, setApplyState] = useState<JsonApplyState | undefined>();
+  const [editPick, setEditPick] = useState<EditPickState | undefined>();
+  const [editPreview, setEditPreview] = useState<
+    EditPreviewState | undefined
+  >();
   return {
     pendingProfile,
     setPendingProfile,
@@ -98,8 +124,10 @@ function useScreenState(): ScreenState {
     setAddProfileState,
     removeState,
     setRemoveState,
-    applyState,
-    setApplyState,
+    editPick,
+    setEditPick,
+    editPreview,
+    setEditPreview,
   };
 }
 
@@ -224,7 +252,7 @@ function createActions(deps: SessionDeps): SessionActions {
       void connectTo(profile, deps);
     },
     ...createRemoveActions(deps),
-    ...createApplyActions(deps),
+    ...createEditActions(deps),
   };
 }
 

@@ -12,7 +12,7 @@ export interface CommandContext {
   navigate: (to: string) => void;
 }
 
-/** One REPL command. */
+/** One osctl command. */
 export interface Command {
   /** The official name, with the leading slash. */
   name: string;

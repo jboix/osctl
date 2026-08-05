@@ -53,15 +53,15 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/alias ls',
-    description: 'Show which alias points at which index',
-    run: (context) => void runAliasLs(context),
+    description: 'Show which alias points at which index: /alias ls [pattern]',
+    run: (context, args) => void runAliasLs(context, args[0]),
   },
   {
     name: '/alias apply',
-    description: 'Apply alias actions from JSON input',
+    description: 'Edit alias actions in your editor and apply them',
     run: (context) => {
       if (requireConnection(context) !== undefined) {
-        context.session.startApply({ kind: 'alias' });
+        context.session.startAliasEdit();
       }
     },
   },
@@ -72,18 +72,18 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/template ls',
-    description: 'List the index templates',
-    run: (context) => void runTemplateLs(context),
+    description: 'List the index templates: /template ls [pattern]',
+    run: (context, args) => void runTemplateLs(context, args[0]),
   },
   {
     name: '/template show',
-    description: 'Print a template: /template show <name>',
-    run: (context, args) => void runTemplateShow(context, args[0]),
+    description: 'Print a template, from a picker: /template show [name]',
+    run: (context, args) => runTemplateShow(context, args[0]),
   },
   {
     name: '/template apply',
-    description: 'Create or update a template from JSON input',
-    run: (context, args) => void runTemplateApply(context, args[0]),
+    description: 'Edit a template in your editor: /template apply [name]',
+    run: (context, args) => runTemplateApply(context, args[0]),
   },
   {
     name: '/template rm',
@@ -92,18 +92,18 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/policy ls',
-    description: 'List the ISM policies',
-    run: (context) => void runPolicyLs(context),
+    description: 'List the ISM policies: /policy ls [pattern]',
+    run: (context, args) => void runPolicyLs(context, args[0]),
   },
   {
     name: '/policy show',
-    description: 'Print a policy: /policy show <name>',
-    run: (context, args) => void runPolicyShow(context, args[0]),
+    description: 'Print a policy, from a picker: /policy show [name]',
+    run: (context, args) => runPolicyShow(context, args[0]),
   },
   {
     name: '/policy apply',
-    description: 'Create or update a policy, resolving seq_no internally',
-    run: (context, args) => void runPolicyApply(context, args[0]),
+    description: 'Edit a policy in your editor: /policy apply [name]',
+    run: (context, args) => runPolicyApply(context, args[0]),
   },
   {
     name: '/policy rm',

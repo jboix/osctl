@@ -7,9 +7,11 @@ import type {
   IndexInfo,
   Profile,
 } from '../../engine/engine';
+import type { DiffLine } from '../components/line-diff';
 import type { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
+import type { EditKind } from './edit-content';
 
 /** One block of scrollback output. */
 export interface OutputItem {
@@ -27,12 +29,29 @@ export interface AddProfileState {
   error: string;
 }
 
-/** What the JSON apply screen writes to. */
-export type JsonApplyState =
-  | { kind: 'alias' }
-  | { kind: 'index'; name: string }
-  | { kind: 'template'; name: string }
-  | { kind: 'policy'; name: string };
+/** The picker of the editor flow: choose a document or start a new one. */
+export interface EditPickState {
+  /** The picked resource kind. */
+  kind: 'template' | 'policy';
+  /** The existing document names. */
+  names: string[];
+  /** What picking a document does. Only `apply` offers the new entry. */
+  action: 'apply' | 'show';
+}
+
+/** A parsed edit awaiting confirmation. */
+export interface EditPreviewState {
+  /** The edited resource kind. */
+  kind: EditKind;
+  /** The document name, absent for alias actions. */
+  name?: string;
+  /** The parsed payload to apply. */
+  payload: unknown;
+  /** The confirmation title. */
+  title: string;
+  /** The preview lines: a diff, a summary, or the plain body. */
+  lines: DiffLine[];
+}
 
 /** A removal awaiting selection and confirmation. */
 export type RemoveState =
@@ -46,12 +65,20 @@ export type RemoveState =
 
 /** The actions the shell can trigger. */
 export interface SessionActions {
-  /** Opens the JSON apply screen for the given target. */
-  startApply: (state: JsonApplyState) => void;
-  /** Closes the JSON apply screen without applying. */
-  cancelApply: () => void;
-  /** Applies the confirmed payload to the stored target. */
-  executeApply: (payload: unknown) => void;
+  /** Opens the editor for the named document, or the picker without a name. */
+  startEdit: (kind: 'template' | 'policy', name?: string) => void;
+  /** Prints the named document, or opens the picker without a name. */
+  startShow: (kind: 'template' | 'policy', name?: string) => void;
+  /** Acts on the picked or newly named document. */
+  pickEditTarget: (name: string, isNew: boolean) => void;
+  /** Opens the editor over an alias actions skeleton. */
+  startAliasEdit: () => void;
+  /** Opens the editor over the body of a new index. */
+  startIndexEdit: (name: string) => void;
+  /** Closes the editor flow without applying. */
+  cancelEdit: () => void;
+  /** Applies the previewed edit. */
+  confirmEdit: () => void;
   /** Opens the removal screen for the matched resources. */
   startRemove: (state: RemoveState) => void;
   /** Closes the removal screen without deleting. */
@@ -94,10 +121,19 @@ export interface SessionState {
   removeState?: RemoveState;
   /** Stores the removal awaiting selection and confirmation. */
   setRemoveState: (state: RemoveState | undefined) => void;
-  /** The target the /apply screen writes to. */
-  applyState?: JsonApplyState;
-  /** Stores the apply target. */
-  setApplyState: (state: JsonApplyState | undefined) => void;
+  /** The picker the /edit/pick screen renders. */
+  editPick?: EditPickState;
+  /** Stores the picker state. */
+  setEditPick: (state: EditPickState | undefined) => void;
+  /** The edit the /edit/preview screen confirms. */
+  editPreview?: EditPreviewState;
+  /** Stores the edit awaiting confirmation. */
+  setEditPreview: (state: EditPreviewState | undefined) => void;
+
+  /** The scrollback generation. Bumping it repaints the scrollback. */
+  generation: number;
+  /** Clears the terminal and repaints everything at the current width. */
+  redraw: () => void;
 
   /** The command input editor state. */
   editor: LineEditor;
@@ -119,4 +155,6 @@ export interface SessionDeps extends SessionState {
   push: (node: ReactNode) => void;
   /** Moves the input area to another screen. */
   navigate: (to: string) => void;
+  /** Switches the terminal raw mode, for handing the tty to an editor. */
+  setRawMode: (raw: boolean) => void;
 }
