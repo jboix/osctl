@@ -5,9 +5,9 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
+  type AliasInfo,
   type Connection,
   createConnection,
-  deleteIndices,
   describeFailure,
   type FailureReport,
   health,
@@ -19,88 +19,19 @@ import { FailureBlock } from '../components/failure-block';
 import { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
+import { createAliasActions } from './alias-actions';
+import type {
+  AddProfileState,
+  OutputItem,
+  Session,
+  SessionActions,
+  SessionDeps,
+  SessionState,
+} from './session-types';
 
-/** One block of scrollback output. */
-export interface OutputItem {
-  /** Stable identity for Ink's Static list. */
-  id: number;
-  /** The rendered block. */
-  node: ReactNode;
-}
+export type { OutputItem, Session };
 
-/** A failed add attempt the wizard resumes from. */
-interface AddProfileState {
-  /** The answers of the failed attempt. */
-  answers: ProfileAnswers;
-  /** The failure message. */
-  error: string;
-}
-
-/** The actions the shell can trigger. */
-interface SessionActions {
-  /** Opens the /index rm screen for the matched indices. */
-  startIndexRm: (targets: IndexInfo[]) => void;
-  /** Closes the /index rm screen without deleting. */
-  cancelIndexRm: () => void;
-  /** Deletes the confirmed indices. */
-  executeIndexRm: (names: string[]) => void;
-  /** Opens the /profile add wizard. */
-  startProfileAdd: () => void;
-  /** Closes the wizard without saving. */
-  cancelProfileAdd: () => void;
-  /** Tests the wizard answers and saves the profile on success. */
-  submitProfileAdd: (answers: ProfileAnswers) => void;
-  /** Submits the password for the pending profile. */
-  submitPassword: (password: string) => void;
-  /** Closes the password prompt without connecting. */
-  cancelPassword: () => void;
-  /** Connects to the given profile, asking for its password when needed. */
-  switchProfile: (profile: Profile) => void;
-}
-
-/** The session the shell renders. */
-export interface Session extends SessionActions {
-  /** The scrollback blocks, oldest first. */
-  outputs: OutputItem[];
-  /** The values the status bar displays. */
-  status: StatusBarProps;
-  /** Appends a block to the scrollback. */
-  push: (node: ReactNode) => void;
-  /** The profile awaiting a password on the /password screen. */
-  pendingProfile?: Profile;
-  /** The failed add attempt the /profile/add screen resumes from. */
-  addState?: AddProfileState;
-  /** The live connection, set after a successful connect. */
-  connection?: Connection;
-  /** The indices the /index/rm screen offers for deletion. */
-  rmState?: IndexInfo[];
-  /** The command input editor state. */
-  editor: LineEditor;
-  /** Replaces the command input editor state. */
-  setEditor: (editor: LineEditor) => void;
-}
-
-/** The state setters and the navigation the session flows drive. */
-interface SessionDeps {
-  /** The profile awaiting a password, when there is one. */
-  pendingProfile?: Profile;
-  /** Appends an output block. */
-  push: (node: ReactNode) => void;
-  /** Updates the status bar values. */
-  setStatus: (status: StatusBarProps) => void;
-  /** Stores the profile awaiting a password. */
-  setPendingProfile: (profile: Profile | undefined) => void;
-  /** Stores the failed add attempt. */
-  setAddProfileState: (state: AddProfileState | undefined) => void;
-  /** Stores the live connection. */
-  setConnection: (connection: Connection | undefined) => void;
-  /** The live connection, when there is one. */
-  connection?: Connection;
-  /** Stores the indices offered for deletion. */
-  setRmState: (targets: IndexInfo[] | undefined) => void;
-  /** Moves the input area to another screen. */
-  navigate: (to: string) => void;
-}
+import { createIndexActions } from './index-actions';
 
 /**
  * Owns the session state and runs the startup connection flow.
@@ -111,26 +42,41 @@ interface SessionDeps {
 export function useSession(header: ReactNode): Session {
   const navigate = useNavigate();
   const { outputs, push } = useOutputs(header);
+  const state = useSessionState();
+  const deps: SessionDeps = { ...state, push, navigate };
+  useStartup(deps);
+  return { outputs, push, ...state, ...createActions(deps) };
+}
+
+/**
+ * Owns the session state values.
+ *
+ * @returns The values and their setters.
+ */
+function useSessionState(): SessionState {
   const [status, setStatus] = useState<StatusBarProps>({});
   const [pendingProfile, setPendingProfile] = useState<Profile | undefined>();
   const [addState, setAddProfileState] = useState<AddProfileState>();
   const [connection, setConnection] = useState<Connection | undefined>();
   const [rmState, setRmState] = useState<IndexInfo[] | undefined>();
-  const deps: SessionDeps = {
-    pendingProfile,
-    connection,
-    push,
-    setStatus,
-    setPendingProfile,
-    setAddProfileState,
-    setConnection,
-    setRmState,
-    navigate,
-  };
-  useStartup(deps);
+  const [aliasRmState, setAliasRmState] = useState<AliasInfo[] | undefined>();
   const [editor, setEditor] = useState(() => LineEditor.create());
-  const view = { outputs, status, push, pendingProfile, addState, connection };
-  return { ...view, rmState, editor, setEditor, ...createActions(deps) };
+  return {
+    status,
+    setStatus,
+    pendingProfile,
+    setPendingProfile,
+    addState,
+    setAddProfileState,
+    connection,
+    setConnection,
+    rmState,
+    setRmState,
+    aliasRmState,
+    setAliasRmState,
+    editor,
+    setEditor,
+  };
 }
 
 /**
@@ -204,60 +150,8 @@ function createActions(deps: SessionDeps): SessionActions {
       void connectTo(profile, deps);
     },
     ...createIndexActions(deps),
+    ...createAliasActions(deps),
   };
-}
-
-/**
- * Builds the /index rm actions.
- *
- * @param deps - The session state setters and the navigation.
- * @returns The index actions.
- */
-function createIndexActions(
-  deps: SessionDeps,
-): Pick<SessionActions, 'startIndexRm' | 'cancelIndexRm' | 'executeIndexRm'> {
-  return {
-    startIndexRm: (targets: IndexInfo[]): void => {
-      deps.setRmState(targets);
-      deps.navigate('/index/rm');
-    },
-    cancelIndexRm: (): void => {
-      deps.setRmState(undefined);
-      deps.navigate('/');
-    },
-    executeIndexRm: (names: string[]): void => {
-      deps.setRmState(undefined);
-      deps.navigate('/');
-      void finishIndexRm(names, deps);
-    },
-  };
-}
-
-/**
- * Deletes the confirmed indices and reports the outcome.
- *
- * @param names - The index names to delete.
- * @param deps - The session state setters and the navigation.
- * @returns Nothing.
- */
-async function finishIndexRm(
-  names: string[],
-  deps: SessionDeps,
-): Promise<void> {
-  if (deps.connection === undefined) {
-    return;
-  }
-  try {
-    await deleteIndices(deps.connection, names);
-    deps.push(
-      <Text color="green">
-        ✔ Deleted {names.length} {names.length === 1 ? 'index' : 'indices'}:{' '}
-        {names.join(', ')}.
-      </Text>,
-    );
-  } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
-  }
 }
 
 /**

@@ -20,7 +20,7 @@ typing; the slash form is the official one.
 | `/alias ls`         | Show a tree of aliases to indices. Marks the write index and shows filters | `GET /_alias`                    |
 | `/alias check`      | Report head indices missing expected aliases and offer to fix them         | `GET /_alias`                    |
 | `/alias apply`      | Apply alias actions from JSON input, with a preview of the resulting state | `POST /_aliases`                 |
-| `/alias rm <alias>` | Remove an alias from its indices after confirmation                        | `DELETE /{index}/_alias/{alias}` |
+| `/alias rm [pattern]` | Remove aliases from a selection after confirmation                       | `DELETE /{index}/_alias/{alias}` |
 
 ## template
 
@@ -58,10 +58,10 @@ typing; the slash form is the official one.
 
 ## JSON input
 
-Commands that take JSON (`/alias apply`, `/template apply`, `/template diff`, `/policy apply`) accept
-it from any of these sources:
+Commands that take JSON (`/alias apply`, `/template apply`, `/template diff`, `/policy apply`)
+open the JSON input box:
 
-- `-f <file>`: read from a file.
-- Paste: an input box accepts pasted JSON via bracketed paste and validates it live.
-- Dropped file: a file dropped on the terminal is inserted as a path and loaded like `-f`.
-- `$EDITOR`: the `edit` commands fetch the remote document and open it in the editor.
+- Paste the payload, or paste (or drop) the path of a `.json` file to load it.
+- The box validates on every change and links the format documentation.
+- Ctrl+d moves on to a pretty printed preview; the request runs only after the confirmation.
+- `$EDITOR` integration for the `edit` commands is planned.

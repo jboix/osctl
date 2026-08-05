@@ -67,12 +67,13 @@ Used by `/index rm` when the pattern matches more than one index.
 
 ## JSON input box
 
-Used by commands that accept JSON without `-f`.
+Used by the commands that accept a JSON payload.
 
-- Accepts pasted content via bracketed paste.
-- Detects a pasted path to an existing `.json` file and loads that file instead.
-- Validates JSON on every change and shows the position of the first error.
-- Confirmation shows the pretty-printed payload before sending.
+- Accepts pasted content; enter adds a line, ctrl+u clears, escape cancels.
+- A first paste that is the path of a `.json` file loads that file instead.
+- Validates on every change and shows the first parse error. A link to the format
+  documentation is shown above the box.
+- Ctrl+d ends the input. The pretty printed payload is confirmed before sending.
 
 ## Confirmations
 

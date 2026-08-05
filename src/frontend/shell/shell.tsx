@@ -11,6 +11,8 @@ import { LineEditorView } from '../components/line-editor';
 import type { LineEditor } from '../components/line-editor-machine';
 import { PasswordPrompt } from '../components/password-prompt';
 import { StatusBar } from '../components/status-bar';
+import { AliasApplyScreen } from '../screens/alias-apply';
+import { AliasRmScreen } from '../screens/alias-rm';
 import { IndexRmScreen } from '../screens/index-rm';
 import { ProfileAddWizard } from '../screens/profile-add';
 import { ProfileSelect } from '../screens/profile-select';
@@ -41,32 +43,67 @@ export function Shell(): ReactElement {
         )}
       </Static>
       <Box flexDirection="column" marginTop={1}>
-        <Routes>
-          <Route element={<CommandInput session={session} />} path="/" />
-          <Route
-            element={<ProfileAddRoute session={session} />}
-            path="/profile/add"
-          />
-          <Route
-            element={<ProfileLsRoute session={session} />}
-            path="/profile/ls"
-          />
-          <Route
-            element={<ProfileDefaultRoute session={session} />}
-            path="/profile/default"
-          />
-          <Route
-            element={<PasswordRoute session={session} />}
-            path="/password"
-          />
-          <Route
-            element={<IndexRmRoute session={session} />}
-            path="/index/rm"
-          />
-        </Routes>
+        <ScreenRoutes session={session} />
         <StatusBar {...session.status} />
       </Box>
     </Box>
+  );
+}
+
+/** The input-area screens, one route per path. */
+const SCREENS: {
+  path: string;
+  render: (session: Session) => ReactElement;
+}[] = [
+  { path: '/', render: (session) => <CommandInput session={session} /> },
+  {
+    path: '/profile/add',
+    render: (session) => <ProfileAddRoute session={session} />,
+  },
+  {
+    path: '/profile/ls',
+    render: (session) => <ProfileLsRoute session={session} />,
+  },
+  {
+    path: '/profile/default',
+    render: (session) => <ProfileDefaultRoute session={session} />,
+  },
+  {
+    path: '/password',
+    render: (session) => <PasswordRoute session={session} />,
+  },
+  {
+    path: '/index/rm',
+    render: (session) => <IndexRmRoute session={session} />,
+  },
+  {
+    path: '/alias/rm',
+    render: (session) => <AliasRmRoute session={session} />,
+  },
+  {
+    path: '/alias/apply',
+    render: (session) => <AliasApplyRoute session={session} />,
+  },
+];
+
+/**
+ * Renders one route per screen.
+ *
+ * @param props - The component props.
+ * @param props.session - The running session.
+ * @returns The routes element.
+ */
+function ScreenRoutes(props: { session: Session }): ReactElement {
+  return (
+    <Routes>
+      {SCREENS.map((screen) => (
+        <Route
+          element={screen.render(props.session)}
+          key={screen.path}
+          path={screen.path}
+        />
+      ))}
+    </Routes>
   );
 }
 
@@ -177,6 +214,43 @@ function IndexRmRoute(props: { session: Session }): ReactElement {
     <IndexRmScreen
       onCancel={props.session.cancelIndexRm}
       onConfirm={props.session.executeIndexRm}
+      targets={targets}
+    />
+  );
+}
+
+/**
+ * Renders the /alias/apply screen.
+ *
+ * @param props - The component props.
+ * @param props.session - The running session.
+ * @returns The apply screen element.
+ */
+function AliasApplyRoute(props: { session: Session }): ReactElement {
+  return (
+    <AliasApplyScreen
+      onCancel={props.session.cancelAliasApply}
+      onConfirm={props.session.executeAliasApply}
+    />
+  );
+}
+
+/**
+ * Renders the /alias/rm screen, or returns home without a pending removal.
+ *
+ * @param props - The component props.
+ * @param props.session - The running session.
+ * @returns The confirmation element.
+ */
+function AliasRmRoute(props: { session: Session }): ReactElement {
+  const targets = props.session.aliasRmState;
+  if (targets === undefined) {
+    return <Navigate to="/" />;
+  }
+  return (
+    <AliasRmScreen
+      onCancel={props.session.cancelAliasRm}
+      onConfirm={props.session.executeAliasRm}
       targets={targets}
     />
   );

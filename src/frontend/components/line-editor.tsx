@@ -2,6 +2,7 @@
 
 import { Text } from 'ink';
 import type { ReactElement } from 'react';
+import { Caret } from './caret';
 
 /**
  * Renders the line with the caret at the given position.
@@ -15,11 +16,13 @@ export function LineEditorView(props: {
   value: string;
   cursor: number;
 }): ReactElement {
-  const at = props.value[props.cursor] ?? ' ';
   return (
     <Text>
       {props.value.slice(0, props.cursor)}
-      <Text inverse>{at}</Text>
+      <Caret
+        char={props.value[props.cursor]}
+        key={`${props.cursor}:${props.value}`}
+      />
       {props.value.slice(props.cursor + 1)}
     </Text>
   );
