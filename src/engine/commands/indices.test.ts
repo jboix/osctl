@@ -33,6 +33,19 @@ test('createIndex creates the named index', async () => {
   expect(captured).toEqual([{ index: 'events-000001' }]);
 });
 
+test('createIndex sends the body when given', async () => {
+  const captured: unknown[] = [];
+  const body = { aliases: { events: { is_write_index: true } } };
+  await createIndex(fakeConnection(captured), 'events-000001', body);
+  expect(captured).toEqual([{ index: 'events-000001', body }]);
+});
+
+test('createIndex rejects bodies that are no objects', async () => {
+  expect(createIndex(fakeConnection([]), 'events-000001', [1])).rejects.toThrow(
+    'object',
+  );
+});
+
 test('deleteIndices deletes the named indices', async () => {
   const captured: unknown[] = [];
   await deleteIndices(fakeConnection(captured), ['a-000001', 'b-000001']);

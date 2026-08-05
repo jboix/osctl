@@ -1,11 +1,9 @@
-// The /alias rm screen: select the aliases, review the plan, confirm.
+// The /alias rm flavor of the removal screen: the affected indices.
 
-import { Box, Text, useInput } from 'ink';
-import SelectInput from 'ink-select-input';
-import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { Text } from 'ink';
+import type { ReactElement, ReactNode } from 'react';
 import type { AliasInfo } from '../../engine/engine';
-import { MultiSelect } from '../components/multi-select';
+import { RemoveScreen } from './remove';
 
 /** The screen contract. */
 export interface AliasRmScreenProps {
@@ -18,110 +16,46 @@ export interface AliasRmScreenProps {
 }
 
 /**
- * Renders the removal flow: multi-select first, then the confirmation.
+ * Renders the alias removal flow.
  *
  * @param props - The component props.
  * @returns The screen element.
  */
 export function AliasRmScreen(props: AliasRmScreenProps): ReactElement {
-  const [chosen, setChosen] = useState<string[] | undefined>();
-  useInput((input, key) => {
-    if (key.escape || input === 'q' || (key.ctrl && input === 'c')) {
-      props.onCancel();
-    }
-  });
   return (
-    <Box
-      borderColor="red"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
-    >
-      <Text color="red">Remove aliases (esc, q, or ctrl+c to cancel)</Text>
-      {chosen === undefined ? (
-        <Selection
-          onCancel={props.onCancel}
-          onChosen={setChosen}
-          targets={props.targets}
-        />
-      ) : (
-        <Confirmation
-          chosen={chosen}
-          onConfirm={props.onConfirm}
-          onReject={props.onCancel}
-          targets={props.targets}
-        />
-      )}
-    </Box>
-  );
-}
-
-/**
- * Renders the multi-select over the matched aliases.
- *
- * @param props - The component props.
- * @param props.targets - The aliases the pattern matched.
- * @param props.onChosen - Called with the selected names.
- * @param props.onCancel - Called when nothing is selected.
- * @returns The selection element.
- */
-function Selection(props: {
-  targets: AliasInfo[];
-  onChosen: (names: string[]) => void;
-  onCancel: () => void;
-}): ReactElement {
-  return (
-    <MultiSelect
+    <RemoveScreen
+      confirmation={(chosen) => summary(props.targets, chosen)}
       items={props.targets.map((alias) => ({
         label: `${alias.name.padEnd(20)} ${alias.targets.length} ${
           alias.targets.length === 1 ? 'index' : 'indices'
         }`,
         value: alias.name,
       }))}
-      onSubmit={(names) =>
-        names.length === 0 ? props.onCancel() : props.onChosen(names)
-      }
+      onCancel={props.onCancel}
+      onConfirm={props.onConfirm}
+      title="Remove aliases"
     />
   );
 }
 
 /**
- * Renders the confirmation: the affected indices and yes or no.
+ * Builds the confirmation summary: the union of the affected indices.
  *
- * @param props - The component props.
- * @param props.targets - The aliases the pattern matched.
- * @param props.chosen - The selected alias names.
- * @param props.onConfirm - Called with the names on yes.
- * @param props.onReject - Called on no.
- * @returns The confirmation element.
+ * @param targets - The aliases the pattern matched.
+ * @param chosen - The selected alias names.
+ * @returns The summary element.
  */
-function Confirmation(props: {
-  targets: AliasInfo[];
-  chosen: string[];
-  onConfirm: (names: string[]) => void;
-  onReject: () => void;
-}): ReactElement {
+function summary(targets: AliasInfo[], chosen: string[]): ReactNode {
   const affected = new Set(
-    props.targets
-      .filter((alias) => props.chosen.includes(alias.name))
+    targets
+      .filter((alias) => chosen.includes(alias.name))
       .flatMap((alias) => alias.targets.map((target) => target.index)),
   );
   return (
-    <Box flexDirection="column">
-      <Text>
-        Remove {props.chosen.join(', ')} from {affected.size}{' '}
-        {affected.size === 1 ? 'index' : 'indices'}:{' '}
-        {[...affected].sort().join(', ')}
-      </Text>
-      <SelectInput
-        items={[
-          { label: 'no', value: false },
-          { label: 'yes, remove', value: true },
-        ]}
-        onSelect={(item) =>
-          item.value ? props.onConfirm(props.chosen) : props.onReject()
-        }
-      />
-    </Box>
+    <Text>
+      Remove {chosen.join(', ')} from {affected.size}{' '}
+      {affected.size === 1 ? 'index' : 'indices'}:{' '}
+      {[...affected].sort().join(', ')}
+    </Text>
   );
 }

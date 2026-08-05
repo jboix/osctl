@@ -10,7 +10,7 @@ typing; the slash form is the official one.
 |--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | `/index ls [pattern]`     | List indices with health, doc count, size, creation date, and attached aliases                                                                                         | `_cat/indices`, `_cat/aliases`              |
 | `/index rm [pattern]`     | Delete indices. Opens a multi-select list when the pattern matches more than one index. Confirms with index count and total size. Warns when a write index is selected | `DELETE /{index}`                           |
-| `/index create <name>`    | Create an index. The wizard suggests the `-000001` suffix so rollover keeps working                                                                                    | `PUT /{index}`                              |
+| `/index create <name> [write-alias]` | Create an index. Without the alias shorthand, the JSON box collects an optional body                                                                        | `PUT /{index}`                              |
 | `/index rollover <alias>` | Roll over the write alias, then diff aliases between old and new head and offer to reapply missing ones                                                                | `POST /{alias}/_rollover`, `POST /_aliases` |
 
 ## alias

@@ -59,7 +59,7 @@ export async function runAliasRm(
       context.session.push(<Text dimColor>No aliases match.</Text>);
       return;
     }
-    context.session.startAliasRm(aliases);
+    context.session.startRemove({ kind: 'alias', targets: aliases });
   } catch (error) {
     context.session.push(<FailureBlock {...describeFailure(error)} />);
   }

@@ -10,7 +10,8 @@ import { IndexRmScreen } from '../screens/index-rm';
 import { JsonApplyScreen } from '../screens/json-apply';
 import { ProfileAddWizard } from '../screens/profile-add';
 import { ProfileSelect } from '../screens/profile-select';
-import { TemplateRmScreen } from '../screens/template-rm';
+import { RemoveScreen } from '../screens/remove';
+import { applyPresentation } from './apply-actions';
 import { CommandInput } from './command-input';
 import type { Session } from './session';
 
@@ -36,25 +37,10 @@ const SCREENS: {
     path: '/password',
     render: (session) => <PasswordRoute session={session} />,
   },
+  { path: '/apply', render: (session) => <ApplyRoute session={session} /> },
   {
-    path: '/index/rm',
-    render: (session) => <IndexRmRoute session={session} />,
-  },
-  {
-    path: '/alias/rm',
-    render: (session) => <AliasRmRoute session={session} />,
-  },
-  {
-    path: '/alias/apply',
-    render: (session) => <AliasApplyRoute session={session} />,
-  },
-  {
-    path: '/template/apply',
-    render: (session) => <TemplateApplyRoute session={session} />,
-  },
-  {
-    path: '/template/rm',
-    render: (session) => <TemplateRmRoute session={session} />,
+    path: '/remove',
+    render: (session) => <RemoveRoute session={session} />,
   },
 ];
 
@@ -148,104 +134,86 @@ function ProfileDefaultRoute(props: { session: Session }): ReactElement {
 }
 
 /**
- * Renders the /index/rm screen, or returns home without targets.
+ * Renders the /remove screen, or returns home without a removal.
  *
  * @param props - The component props.
  * @param props.session - The running session.
- * @returns The deletion screen element.
+ * @returns The removal screen element.
  */
-function IndexRmRoute(props: { session: Session }): ReactElement {
-  const targets = props.session.rmState;
-  if (targets === undefined) {
+function RemoveRoute(props: { session: Session }): ReactElement {
+  const state = props.session.removeState;
+  const shared = {
+    onCancel: props.session.cancelRemove,
+    onConfirm: props.session.executeRemove,
+  };
+  if (state === undefined) {
     return <Navigate to="/" />;
   }
+  if (state.kind === 'index') {
+    return <IndexRmScreen {...shared} targets={state.targets} />;
+  }
+  if (state.kind === 'alias') {
+    return <AliasRmScreen {...shared} targets={state.targets} />;
+  }
   return (
-    <IndexRmScreen
-      onCancel={props.session.cancelIndexRm}
-      onConfirm={props.session.executeIndexRm}
-      targets={targets}
+    <NamedRemove
+      items={state.items}
+      kind={state.kind}
+      session={props.session}
     />
   );
 }
 
 /**
- * Renders the /alias/rm screen, or returns home without a pending removal.
+ * Renders the removal of name based resources: templates and policies.
  *
  * @param props - The component props.
+ * @param props.kind - What is being removed.
+ * @param props.items - The selectable rows.
  * @param props.session - The running session.
- * @returns The confirmation element.
+ * @returns The removal screen element.
  */
-function AliasRmRoute(props: { session: Session }): ReactElement {
-  const targets = props.session.aliasRmState;
-  if (targets === undefined) {
-    return <Navigate to="/" />;
-  }
+function NamedRemove(props: {
+  kind: 'template' | 'policy';
+  items: { label: string; value: string }[];
+  session: Session;
+}): ReactElement {
   return (
-    <AliasRmScreen
-      onCancel={props.session.cancelAliasRm}
-      onConfirm={props.session.executeAliasRm}
-      targets={targets}
+    <RemoveScreen
+      confirmation={(chosen) => (
+        <Text>
+          Delete {chosen.length} {props.kind}
+          {chosen.length === 1 ? '' : 's'}: {chosen.join(', ')}
+        </Text>
+      )}
+      items={props.items}
+      onCancel={props.session.cancelRemove}
+      onConfirm={props.session.executeRemove}
+      title={`Delete ${props.kind === 'template' ? 'templates' : 'policies'}`}
     />
   );
 }
 
 /**
- * Renders the /alias/apply screen.
+ * Renders the /apply screen, or returns home without a target.
  *
  * @param props - The component props.
  * @param props.session - The running session.
  * @returns The apply screen element.
  */
-function AliasApplyRoute(props: { session: Session }): ReactElement {
-  return (
-    <JsonApplyScreen
-      docsUrl="https://docs.opensearch.org/docs/latest/im-plugin/index-alias/"
-      onCancel={props.session.cancelAliasApply}
-      onConfirm={props.session.executeAliasApply}
-      title="Apply alias actions"
-    />
-  );
-}
-
-/**
- * Renders the /template/apply screen, or returns home without a name.
- *
- * @param props - The component props.
- * @param props.session - The running session.
- * @returns The apply screen element.
- */
-function TemplateApplyRoute(props: { session: Session }): ReactElement {
-  const name = props.session.templateApplyState;
-  if (name === undefined) {
+function ApplyRoute(props: { session: Session }): ReactElement {
+  const state = props.session.applyState;
+  if (state === undefined) {
     return <Navigate to="/" />;
   }
+  const presentation = applyPresentation(state);
   return (
     <JsonApplyScreen
-      docsUrl="https://docs.opensearch.org/docs/latest/im-plugin/index-templates/"
-      onCancel={props.session.cancelTemplateApply}
-      onConfirm={props.session.executeTemplateApply}
-      title={`Template "${name}"`}
-    />
-  );
-}
-
-/**
- * Renders the /template/rm screen, or returns home without targets.
- *
- * @param props - The component props.
- * @param props.session - The running session.
- * @returns The deletion screen element.
- */
-function TemplateRmRoute(props: { session: Session }): ReactElement {
-  const targets = props.session.templateRmState;
-  if (targets === undefined) {
-    return <Navigate to="/" />;
-  }
-  return (
-    <TemplateRmScreen
-      onCancel={props.session.cancelTemplateRm}
-      onConfirm={props.session.executeTemplateRm}
-      targets={targets}
+      allowEmpty={presentation.allowEmpty}
+      docsUrl={presentation.docsUrl}
+      onCancel={props.session.cancelApply}
+      onConfirm={props.session.executeApply}
+      title={presentation.title}
     />
   );
 }

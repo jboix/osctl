@@ -104,7 +104,7 @@ export async function runTemplateApply(
     );
     return;
   }
-  context.session.startTemplateApply(name);
+  context.session.startApply({ kind: 'template', name });
 }
 
 /**
@@ -130,7 +130,13 @@ export async function runTemplateRm(
       context.session.push(<Text dimColor>No templates match.</Text>);
       return;
     }
-    context.session.startTemplateRm(templates);
+    context.session.startRemove({
+      kind: 'template',
+      items: templates.map((template) => ({
+        label: `${template.name.padEnd(28)} ${template.patterns.join(', ')}`,
+        value: template.name,
+      })),
+    });
   } catch (error) {
     context.session.push(<FailureBlock {...describeFailure(error)} />);
   }

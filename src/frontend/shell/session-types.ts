@@ -6,7 +6,6 @@ import type {
   Connection,
   IndexInfo,
   Profile,
-  TemplateInfo,
 } from '../../engine/engine';
 import type { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
@@ -28,38 +27,36 @@ export interface AddProfileState {
   error: string;
 }
 
+/** What the JSON apply screen writes to. */
+export type JsonApplyState =
+  | { kind: 'alias' }
+  | { kind: 'index'; name: string }
+  | { kind: 'template'; name: string }
+  | { kind: 'policy'; name: string };
+
+/** A removal awaiting selection and confirmation. */
+export type RemoveState =
+  | { kind: 'index'; targets: IndexInfo[] }
+  | { kind: 'alias'; targets: AliasInfo[] }
+  | {
+      kind: 'template' | 'policy';
+      items: { label: string; value: string }[];
+    };
+
 /** The actions the shell can trigger. */
 export interface SessionActions {
-  /** Opens the /alias apply screen. */
-  startAliasApply: () => void;
-  /** Closes the /alias apply screen without applying. */
-  cancelAliasApply: () => void;
-  /** Applies the confirmed alias actions. */
-  executeAliasApply: (payload: unknown) => void;
-  /** Opens the /alias rm screen for the matched aliases. */
-  startAliasRm: (targets: AliasInfo[]) => void;
-  /** Closes the /alias rm screen without removing. */
-  cancelAliasRm: () => void;
-  /** Removes the confirmed aliases. */
-  executeAliasRm: (names: string[]) => void;
-  /** Opens the /template apply JSON input for the named template. */
-  startTemplateApply: (name: string) => void;
-  /** Closes the /template apply screen without applying. */
-  cancelTemplateApply: () => void;
-  /** Applies the confirmed template definition. */
-  executeTemplateApply: (payload: unknown) => void;
-  /** Opens the /template rm screen for the matched templates. */
-  startTemplateRm: (targets: TemplateInfo[]) => void;
-  /** Closes the /template rm screen without deleting. */
-  cancelTemplateRm: () => void;
-  /** Deletes the confirmed templates. */
-  executeTemplateRm: (names: string[]) => void;
-  /** Opens the /index rm screen for the matched indices. */
-  startIndexRm: (targets: IndexInfo[]) => void;
-  /** Closes the /index rm screen without deleting. */
-  cancelIndexRm: () => void;
-  /** Deletes the confirmed indices. */
-  executeIndexRm: (names: string[]) => void;
+  /** Opens the JSON apply screen for the given target. */
+  startApply: (state: JsonApplyState) => void;
+  /** Closes the JSON apply screen without applying. */
+  cancelApply: () => void;
+  /** Applies the confirmed payload to the stored target. */
+  executeApply: (payload: unknown) => void;
+  /** Opens the removal screen for the matched resources. */
+  startRemove: (state: RemoveState) => void;
+  /** Closes the removal screen without deleting. */
+  cancelRemove: () => void;
+  /** Deletes the confirmed names. */
+  executeRemove: (names: string[]) => void;
   /** Opens the /profile add wizard. */
   startProfileAdd: () => void;
   /** Closes the wizard without saving. */
@@ -92,22 +89,15 @@ export interface SessionState {
   connection?: Connection;
   /** Stores the live connection. */
   setConnection: (connection: Connection | undefined) => void;
-  /** The indices the /index/rm screen offers for deletion. */
-  rmState?: IndexInfo[];
-  /** Stores the indices offered for deletion. */
-  setRmState: (targets: IndexInfo[] | undefined) => void;
-  /** The aliases the /alias/rm screen offers for removal. */
-  aliasRmState?: AliasInfo[];
-  /** Stores the aliases offered for removal. */
-  setAliasRmState: (targets: AliasInfo[] | undefined) => void;
-  /** The template name the /template/apply screen writes to. */
-  templateApplyState?: string;
-  /** Stores the template name being applied. */
-  setTemplateApplyState: (name: string | undefined) => void;
-  /** The templates the /template/rm screen offers for deletion. */
-  templateRmState?: TemplateInfo[];
-  /** Stores the templates offered for deletion. */
-  setTemplateRmState: (targets: TemplateInfo[] | undefined) => void;
+  /** The removal the /remove screen runs. */
+  removeState?: RemoveState;
+  /** Stores the removal awaiting selection and confirmation. */
+  setRemoveState: (state: RemoveState | undefined) => void;
+  /** The target the /apply screen writes to. */
+  applyState?: JsonApplyState;
+  /** Stores the apply target. */
+  setApplyState: (state: JsonApplyState | undefined) => void;
+
   /** The command input editor state. */
   editor: LineEditor;
   /** Replaces the command input editor state. */

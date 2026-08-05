@@ -64,7 +64,7 @@ export async function runIndexRm(
       context.session.push(<Text dimColor>No indices match.</Text>);
       return;
     }
-    context.session.startIndexRm(indices);
+    context.session.startRemove({ kind: 'index', targets: indices });
   } catch (error) {
     context.session.push(<FailureBlock {...describeFailure(error)} />);
   }
@@ -80,6 +80,7 @@ export async function runIndexRm(
 export async function runIndexCreate(
   context: CommandContext,
   name?: string,
+  writeAlias?: string,
 ): Promise<void> {
   const connection = requireConnection(context);
   if (connection === undefined) {
@@ -87,20 +88,32 @@ export async function runIndexCreate(
   }
   if (name === undefined) {
     context.session.push(
-      <Text color="yellow">Usage: /index create {'<name>'}.</Text>,
+      <Text color="yellow">
+        Usage: /index create {'<name>'} [write-alias].
+      </Text>,
     );
     return;
   }
+  if (!/-\d{6}$/.test(name)) {
+    context.session.push(
+      <Text color="yellow">
+        The name has no numeric suffix like -000001: rollover will not work.
+      </Text>,
+    );
+  }
+  if (writeAlias === undefined) {
+    context.session.startApply({ kind: 'index', name });
+    return;
+  }
   try {
-    await createIndex(connection, name);
-    context.session.push(<Text color="green">✔ Index "{name}" created.</Text>);
-    if (!/-\d{6}$/.test(name)) {
-      context.session.push(
-        <Text color="yellow">
-          The name has no numeric suffix like -000001: rollover will not work.
-        </Text>,
-      );
-    }
+    await createIndex(connection, name, {
+      aliases: { [writeAlias]: { is_write_index: true } },
+    });
+    context.session.push(
+      <Text color="green">
+        ✔ Index "{name}" created with write alias "{writeAlias}".
+      </Text>,
+    );
   } catch (error) {
     context.session.push(<FailureBlock {...describeFailure(error)} />);
   }

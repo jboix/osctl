@@ -5,25 +5,24 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  type AliasInfo,
   type Connection,
   createConnection,
   describeFailure,
   type FailureReport,
   health,
-  type IndexInfo,
   type Profile,
   ProfileStore,
-  type TemplateInfo,
 } from '../../engine/engine';
 import { FailureBlock } from '../components/failure-block';
 import { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
-import { createAliasActions } from './alias-actions';
+
 import type {
   AddProfileState,
+  JsonApplyState,
   OutputItem,
+  RemoveState,
   Session,
   SessionActions,
   SessionDeps,
@@ -32,8 +31,8 @@ import type {
 
 export type { OutputItem, Session };
 
-import { createIndexActions } from './index-actions';
-import { createTemplateActions } from './template-actions';
+import { createApplyActions } from './apply-actions';
+import { createRemoveActions } from './remove-actions';
 
 /**
  * Owns the session state and runs the startup connection flow.
@@ -89,27 +88,17 @@ type ScreenState = Omit<
 function useScreenState(): ScreenState {
   const [pendingProfile, setPendingProfile] = useState<Profile | undefined>();
   const [addState, setAddProfileState] = useState<AddProfileState>();
-  const [rmState, setRmState] = useState<IndexInfo[] | undefined>();
-  const [aliasRmState, setAliasRmState] = useState<AliasInfo[] | undefined>();
-  const [templateApplyState, setTemplateApplyState] = useState<
-    string | undefined
-  >();
-  const [templateRmState, setTemplateRmState] = useState<
-    TemplateInfo[] | undefined
-  >();
+  const [removeState, setRemoveState] = useState<RemoveState | undefined>();
+  const [applyState, setApplyState] = useState<JsonApplyState | undefined>();
   return {
     pendingProfile,
     setPendingProfile,
     addState,
     setAddProfileState,
-    rmState,
-    setRmState,
-    aliasRmState,
-    setAliasRmState,
-    templateApplyState,
-    setTemplateApplyState,
-    templateRmState,
-    setTemplateRmState,
+    removeState,
+    setRemoveState,
+    applyState,
+    setApplyState,
   };
 }
 
@@ -183,9 +172,8 @@ function createActions(deps: SessionDeps): SessionActions {
     switchProfile: (profile: Profile): void => {
       void connectTo(profile, deps);
     },
-    ...createIndexActions(deps),
-    ...createAliasActions(deps),
-    ...createTemplateActions(deps),
+    ...createRemoveActions(deps),
+    ...createApplyActions(deps),
   };
 }
 

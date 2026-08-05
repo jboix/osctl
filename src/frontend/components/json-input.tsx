@@ -22,6 +22,8 @@ export interface JsonInputProps {
   onSubmit: (payload: unknown) => void;
   /** Called when the user cancels. */
   onCancel: () => void;
+  /** Whether ctrl+d on an empty box submits an undefined payload. */
+  allowEmpty?: boolean;
 }
 
 /**
@@ -47,7 +49,7 @@ export function JsonInput(props: JsonInputProps): ReactElement {
       {props.docsUrl !== undefined && (
         <Text dimColor>Format: {props.docsUrl}</Text>
       )}
-      <Body error={error} text={text} />
+      <Body allowEmpty={props.allowEmpty} error={error} text={text} />
     </Box>
   );
 }
@@ -77,12 +79,26 @@ function handleJsonKey(input: string, key: Key, deps: JsonKeyDeps): void {
     return;
   }
   if (result.done) {
-    if (deps.error === undefined) {
-      deps.onSubmit(JSON.parse(deps.text));
-    }
+    submitDone(deps);
     return;
   }
   deps.setText(deps.text === '' ? loadWhenPath(result.text) : result.text);
+}
+
+/**
+ * Submits the buffer on ctrl+d: empty when allowed, parsed otherwise.
+ *
+ * @param deps - The buffer state and the callbacks.
+ * @returns Nothing.
+ */
+function submitDone(deps: JsonKeyDeps): void {
+  if (deps.text.trim() === '' && deps.allowEmpty === true) {
+    deps.onSubmit(undefined);
+    return;
+  }
+  if (deps.error === undefined) {
+    deps.onSubmit(JSON.parse(deps.text));
+  }
 }
 
 /**
@@ -110,12 +126,20 @@ function loadWhenPath(text: string): string {
  * @param props.error - The validation error, when there is one.
  * @returns The body element.
  */
-function Body(props: { text: string; error?: string }): ReactElement {
+function Body(props: {
+  text: string;
+  error?: string;
+  allowEmpty?: boolean;
+}): ReactElement {
   if (props.text === '') {
     return (
       <Text>
         <Caret key="" />
-        <Text dimColor> Paste JSON, or the path of a .json file.</Text>
+        <Text dimColor>
+          {' '}
+          Paste JSON, or the path of a .json file.
+          {props.allowEmpty === true && ' Ctrl+d on the empty box skips it.'}
+        </Text>
       </Text>
     );
   }

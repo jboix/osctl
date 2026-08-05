@@ -14,6 +14,13 @@ import {
   runIndexRollover,
 } from './index-commands';
 import {
+  runPolicyApply,
+  runPolicyExplain,
+  runPolicyLs,
+  runPolicyRm,
+  runPolicyShow,
+} from './policy-commands';
+import {
   runTemplateApply,
   runTemplateLs,
   runTemplateRm,
@@ -35,8 +42,8 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/index create',
-    description: 'Create an index: /index create <name>',
-    run: (context, args) => void runIndexCreate(context, args[0]),
+    description: 'Create an index: /index create <name> [write-alias]',
+    run: (context, args) => void runIndexCreate(context, args[0], args[1]),
   },
   {
     name: '/index rollover',
@@ -53,7 +60,7 @@ const COMMANDS: Command[] = [
     description: 'Apply alias actions from JSON input',
     run: (context) => {
       if (requireConnection(context) !== undefined) {
-        context.session.startAliasApply();
+        context.session.startApply({ kind: 'alias' });
       }
     },
   },
@@ -81,6 +88,31 @@ const COMMANDS: Command[] = [
     name: '/template rm',
     description: 'Delete templates from a selection: /template rm [pattern]',
     run: (context, args) => void runTemplateRm(context, args[0]),
+  },
+  {
+    name: '/policy ls',
+    description: 'List the ISM policies',
+    run: (context) => void runPolicyLs(context),
+  },
+  {
+    name: '/policy show',
+    description: 'Print a policy: /policy show <name>',
+    run: (context, args) => void runPolicyShow(context, args[0]),
+  },
+  {
+    name: '/policy apply',
+    description: 'Create or update a policy, resolving seq_no internally',
+    run: (context, args) => void runPolicyApply(context, args[0]),
+  },
+  {
+    name: '/policy rm',
+    description: 'Delete policies from a selection: /policy rm [pattern]',
+    run: (context, args) => void runPolicyRm(context, args[0]),
+  },
+  {
+    name: '/policy explain',
+    description: 'Show the ISM state per index: /policy explain [pattern]',
+    run: (context, args) => void runPolicyExplain(context, args[0]),
   },
   {
     name: '/profile add',

@@ -16,6 +16,8 @@ export interface JsonApplyScreenProps {
   onConfirm: (payload: unknown) => void;
   /** Called when the user cancels. */
   onCancel: () => void;
+  /** Whether an empty box is allowed, submitting an undefined payload. */
+  allowEmpty?: boolean;
 }
 
 /**
@@ -25,22 +27,23 @@ export interface JsonApplyScreenProps {
  * @returns The screen element.
  */
 export function JsonApplyScreen(props: JsonApplyScreenProps): ReactElement {
-  const [payload, setPayload] = useState<unknown>();
+  const [payload, setPayload] = useState<{ value: unknown } | undefined>();
   if (payload === undefined) {
     return (
       <JsonInput
+        allowEmpty={props.allowEmpty}
         docsUrl={props.docsUrl}
         onCancel={props.onCancel}
-        onSubmit={setPayload}
+        onSubmit={(value) => setPayload({ value })}
         title={props.title}
       />
     );
   }
   return (
     <Preview
-      onConfirm={() => props.onConfirm(payload)}
+      onConfirm={() => props.onConfirm(payload.value)}
       onReject={props.onCancel}
-      payload={payload}
+      payload={payload.value}
       title={props.title}
     />
   );
@@ -75,7 +78,11 @@ function Preview(props: {
       paddingX={1}
     >
       <Text color="cyan">{props.title}: apply this?</Text>
-      <Text dimColor>{JSON.stringify(props.payload, null, 2)}</Text>
+      <Text dimColor>
+        {props.payload === undefined
+          ? '(no body)'
+          : JSON.stringify(props.payload, null, 2)}
+      </Text>
       <SelectInput
         items={[
           { label: 'no', value: false },
