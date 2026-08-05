@@ -6,6 +6,7 @@ import type {
   Connection,
   IndexInfo,
   Profile,
+  TemplateInfo,
 } from '../../engine/engine';
 import type { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
@@ -41,6 +42,18 @@ export interface SessionActions {
   cancelAliasRm: () => void;
   /** Removes the confirmed aliases. */
   executeAliasRm: (names: string[]) => void;
+  /** Opens the /template apply JSON input for the named template. */
+  startTemplateApply: (name: string) => void;
+  /** Closes the /template apply screen without applying. */
+  cancelTemplateApply: () => void;
+  /** Applies the confirmed template definition. */
+  executeTemplateApply: (payload: unknown) => void;
+  /** Opens the /template rm screen for the matched templates. */
+  startTemplateRm: (targets: TemplateInfo[]) => void;
+  /** Closes the /template rm screen without deleting. */
+  cancelTemplateRm: () => void;
+  /** Deletes the confirmed templates. */
+  executeTemplateRm: (names: string[]) => void;
   /** Opens the /index rm screen for the matched indices. */
   startIndexRm: (targets: IndexInfo[]) => void;
   /** Closes the /index rm screen without deleting. */
@@ -87,6 +100,14 @@ export interface SessionState {
   aliasRmState?: AliasInfo[];
   /** Stores the aliases offered for removal. */
   setAliasRmState: (targets: AliasInfo[] | undefined) => void;
+  /** The template name the /template/apply screen writes to. */
+  templateApplyState?: string;
+  /** Stores the template name being applied. */
+  setTemplateApplyState: (name: string | undefined) => void;
+  /** The templates the /template/rm screen offers for deletion. */
+  templateRmState?: TemplateInfo[];
+  /** Stores the templates offered for deletion. */
+  setTemplateRmState: (targets: TemplateInfo[] | undefined) => void;
   /** The command input editor state. */
   editor: LineEditor;
   /** Replaces the command input editor state. */

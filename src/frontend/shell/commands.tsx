@@ -3,40 +3,24 @@
 import { Box, Text } from 'ink';
 import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
+import { ProfileStore } from '../../engine/engine';
+import { runAliasLs, runAliasRm } from './alias-commands';
+import type { Command, CommandContext } from './command-types';
+import { requireConnection } from './command-utils';
 import {
-  type AliasInfo,
-  type Connection,
-  createIndex,
-  describeFailure,
-  type IndexInfo,
-  listAliases,
-  listIndices,
-  ProfileStore,
-  rollover,
-} from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
-import { Table } from '../components/table';
-import type { Session } from './session';
+  runIndexCreate,
+  runIndexLs,
+  runIndexRm,
+  runIndexRollover,
+} from './index-commands';
+import {
+  runTemplateApply,
+  runTemplateLs,
+  runTemplateRm,
+  runTemplateShow,
+} from './template-commands';
 
-/** What a command can act on. */
-export interface CommandContext {
-  /** The running session. */
-  session: Session;
-  /** Ends the application. */
-  exit: () => void;
-  /** Moves the input area to another screen. */
-  navigate: (to: string) => void;
-}
-
-/** One REPL command. */
-export interface Command {
-  /** The official name, with the leading slash. */
-  name: string;
-  /** One line shown by /help and the suggestions. */
-  description: string;
-  /** Runs the command. */
-  run: (context: CommandContext, args: string[]) => void;
-}
+export type { Command, CommandContext } from './command-types';
 
 const COMMANDS: Command[] = [
   {
@@ -79,6 +63,26 @@ const COMMANDS: Command[] = [
     run: (context, args) => void runAliasRm(context, args[0]),
   },
   {
+    name: '/template ls',
+    description: 'List the index templates',
+    run: (context) => void runTemplateLs(context),
+  },
+  {
+    name: '/template show',
+    description: 'Print a template: /template show <name>',
+    run: (context, args) => void runTemplateShow(context, args[0]),
+  },
+  {
+    name: '/template apply',
+    description: 'Create or update a template from JSON input',
+    run: (context, args) => void runTemplateApply(context, args[0]),
+  },
+  {
+    name: '/template rm',
+    description: 'Delete templates from a selection: /template rm [pattern]',
+    run: (context, args) => void runTemplateRm(context, args[0]),
+  },
+  {
     name: '/profile add',
     description: 'Add a cluster profile and connect to it',
     run: (context) => context.session.startProfileAdd(),
@@ -110,280 +114,6 @@ const COMMANDS: Command[] = [
     run: (context) => context.exit(),
   },
 ];
-
-/**
- * Returns the live connection, reporting when there is none.
- *
- * @param context - What the command can act on.
- * @returns The connection, or undefined after reporting.
- */
-function requireConnection(context: CommandContext): Connection | undefined {
-  const connection = context.session.connection;
-  if (connection === undefined) {
-    context.session.push(
-      <Text color="yellow">Not connected. Run /profile add.</Text>,
-    );
-  }
-  return connection;
-}
-
-/**
- * Lists the indices and renders them as a table block.
- *
- * @param context - What the command can act on.
- * @param pattern - An index name or pattern; all indices when omitted.
- * @returns Nothing.
- */
-async function runIndexLs(
-  context: CommandContext,
-  pattern?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  try {
-    const indices = await listIndices(connection, pattern);
-    context.session.push(
-      indices.length === 0 ? (
-        <Text dimColor>No indices match.</Text>
-      ) : (
-        <IndexTable indices={indices} />
-      ),
-    );
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Opens the deletion screen for the indices matching the pattern.
- *
- * @param context - What the command can act on.
- * @param pattern - An index name or pattern; all indices when omitted.
- * @returns Nothing.
- */
-async function runIndexRm(
-  context: CommandContext,
-  pattern?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  try {
-    const indices = await listIndices(connection, pattern);
-    if (indices.length === 0) {
-      context.session.push(<Text dimColor>No indices match.</Text>);
-      return;
-    }
-    context.session.startIndexRm(indices);
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Creates an index and reports the outcome.
- *
- * @param context - What the command can act on.
- * @param name - The index name.
- * @returns Nothing.
- */
-async function runIndexCreate(
-  context: CommandContext,
-  name?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  if (name === undefined) {
-    context.session.push(
-      <Text color="yellow">Usage: /index create {'<name>'}.</Text>,
-    );
-    return;
-  }
-  try {
-    await createIndex(connection, name);
-    context.session.push(<Text color="green">✔ Index "{name}" created.</Text>);
-    if (!/-\d{6}$/.test(name)) {
-      context.session.push(
-        <Text color="yellow">
-          The name has no numeric suffix like -000001: rollover will not work.
-        </Text>,
-      );
-    }
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Rolls over the alias, reapplying missing aliases, and reports the outcome.
- *
- * @param context - What the command can act on.
- * @param alias - The write alias to roll over.
- * @returns Nothing.
- */
-async function runIndexRollover(
-  context: CommandContext,
-  alias?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  if (alias === undefined) {
-    context.session.push(
-      <Text color="yellow">Usage: /index rollover {'<alias>'}.</Text>,
-    );
-    return;
-  }
-  try {
-    const result = await rollover(connection, alias);
-    context.session.push(
-      <Text color="green">
-        ✔ Rolled over {alias}: {result.oldIndex} → {result.newIndex}.
-      </Text>,
-    );
-    context.session.push(
-      result.reapplied.length === 0 ? (
-        <Text dimColor>No aliases to reapply.</Text>
-      ) : (
-        <Text>Reapplied aliases: {result.reapplied.join(', ')}.</Text>
-      ),
-    );
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Shows the alias tree.
- *
- * @param context - What the command can act on.
- * @returns Nothing.
- */
-async function runAliasLs(context: CommandContext): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  try {
-    const aliases = await listAliases(connection);
-    context.session.push(
-      aliases.length === 0 ? (
-        <Text dimColor>No aliases.</Text>
-      ) : (
-        <AliasTree aliases={aliases} />
-      ),
-    );
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Opens the removal screen for the aliases matching the pattern.
- *
- * @param context - What the command can act on.
- * @param pattern - An alias name or pattern; all aliases when omitted.
- * @returns Nothing.
- */
-async function runAliasRm(
-  context: CommandContext,
-  pattern?: string,
-): Promise<void> {
-  const connection = requireConnection(context);
-  if (connection === undefined) {
-    return;
-  }
-  try {
-    const aliases = (await listAliases(connection)).filter((alias) =>
-      matchesPattern(alias.name, pattern),
-    );
-    if (aliases.length === 0) {
-      context.session.push(<Text dimColor>No aliases match.</Text>);
-      return;
-    }
-    context.session.startAliasRm(aliases);
-  } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
-  }
-}
-
-/**
- * Matches a name against a pattern where `*` matches anything.
- *
- * @param name - The name to test.
- * @param pattern - The pattern; everything matches when omitted.
- * @returns Whether the name matches.
- */
-function matchesPattern(name: string, pattern?: string): boolean {
-  if (pattern === undefined) {
-    return true;
-  }
-  const escaped = pattern
-    .split('*')
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('.*');
-  return new RegExp(`^${escaped}$`).test(name);
-}
-
-/**
- * Renders the alias tree: each alias with the indices it points at.
- *
- * @param props - The component props.
- * @param props.aliases - The aliases to render.
- * @returns The tree element.
- */
-function AliasTree(props: { aliases: AliasInfo[] }): ReactElement {
-  return (
-    <Box flexDirection="column">
-      {props.aliases.map((alias) => (
-        <Box flexDirection="column" key={alias.name}>
-          <Text color="cyan">{alias.name}</Text>
-          {alias.targets.map((target, index) => (
-            <Text key={target.index}>
-              {index === alias.targets.length - 1 ? '└─ ' : '├─ '}
-              {target.index}
-              {target.write && <Text color="green"> (write)</Text>}
-              {target.filtered && <Text dimColor> filtered</Text>}
-            </Text>
-          ))}
-        </Box>
-      ))}
-    </Box>
-  );
-}
-
-/**
- * Renders the index listing as a table.
- *
- * @param props - The component props.
- * @param props.indices - The indices to list.
- * @returns The table element.
- */
-function IndexTable(props: { indices: IndexInfo[] }): ReactElement {
-  const columns = [
-    { label: 'index' },
-    { label: 'health' },
-    { label: 'docs', alignRight: true },
-    { label: 'size', alignRight: true },
-    { label: 'created' },
-    { label: 'aliases (*: write)' },
-  ];
-  const rows = props.indices.map((index) => [
-    index.name,
-    index.health,
-    String(index.docsCount),
-    index.storeSize,
-    index.creationDate,
-    index.aliases.join(', '),
-  ]);
-  return <Table columns={columns} rows={rows} />;
-}
 
 /** The width the command names are padded to in lists. */
 export const NAME_WIDTH = 17;

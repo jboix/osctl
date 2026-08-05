@@ -1,4 +1,4 @@
-// The /alias apply screen: collect the actions JSON, preview, confirm.
+// A JSON apply flow: collect the payload, preview it, confirm.
 
 import { Box, Text, useInput } from 'ink';
 import SelectInput from 'ink-select-input';
@@ -6,32 +6,33 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { JsonInput } from '../components/json-input';
 
-const DOCS_URL =
-  'https://docs.opensearch.org/docs/latest/im-plugin/index-alias/';
-
 /** The screen contract. */
-export interface AliasApplyScreenProps {
-  /** Called with the parsed payload when the actions are confirmed. */
+export interface JsonApplyScreenProps {
+  /** The input box title. */
+  title: string;
+  /** A link to the documentation of the expected format. */
+  docsUrl: string;
+  /** Called with the parsed payload when it is confirmed. */
   onConfirm: (payload: unknown) => void;
   /** Called when the user cancels. */
   onCancel: () => void;
 }
 
 /**
- * Renders the apply flow: the JSON input first, then the preview.
+ * Renders the flow: the JSON input first, then the preview.
  *
  * @param props - The component props.
  * @returns The screen element.
  */
-export function AliasApplyScreen(props: AliasApplyScreenProps): ReactElement {
+export function JsonApplyScreen(props: JsonApplyScreenProps): ReactElement {
   const [payload, setPayload] = useState<unknown>();
   if (payload === undefined) {
     return (
       <JsonInput
-        docsUrl={DOCS_URL}
+        docsUrl={props.docsUrl}
         onCancel={props.onCancel}
         onSubmit={setPayload}
-        title="Apply alias actions"
+        title={props.title}
       />
     );
   }
@@ -40,6 +41,7 @@ export function AliasApplyScreen(props: AliasApplyScreenProps): ReactElement {
       onConfirm={() => props.onConfirm(payload)}
       onReject={props.onCancel}
       payload={payload}
+      title={props.title}
     />
   );
 }
@@ -48,12 +50,14 @@ export function AliasApplyScreen(props: AliasApplyScreenProps): ReactElement {
  * Renders the pretty printed payload and asks for the confirmation.
  *
  * @param props - The component props.
+ * @param props.title - The confirmation title.
  * @param props.payload - The parsed payload.
  * @param props.onConfirm - Called on yes.
  * @param props.onReject - Called on no.
  * @returns The preview element.
  */
 function Preview(props: {
+  title: string;
   payload: unknown;
   onConfirm: () => void;
   onReject: () => void;
@@ -70,7 +74,7 @@ function Preview(props: {
       flexDirection="column"
       paddingX={1}
     >
-      <Text color="cyan">Apply these alias actions?</Text>
+      <Text color="cyan">{props.title}: apply this?</Text>
       <Text dimColor>{JSON.stringify(props.payload, null, 2)}</Text>
       <SelectInput
         items={[

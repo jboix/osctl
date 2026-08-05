@@ -14,6 +14,7 @@ import {
   type IndexInfo,
   type Profile,
   ProfileStore,
+  type TemplateInfo,
 } from '../../engine/engine';
 import { FailureBlock } from '../components/failure-block';
 import { LineEditor } from '../components/line-editor-machine';
@@ -32,6 +33,7 @@ import type {
 export type { OutputItem, Session };
 
 import { createIndexActions } from './index-actions';
+import { createTemplateActions } from './template-actions';
 
 /**
  * Owns the session state and runs the startup connection flow.
@@ -55,27 +57,59 @@ export function useSession(header: ReactNode): Session {
  */
 function useSessionState(): SessionState {
   const [status, setStatus] = useState<StatusBarProps>({});
-  const [pendingProfile, setPendingProfile] = useState<Profile | undefined>();
-  const [addState, setAddProfileState] = useState<AddProfileState>();
   const [connection, setConnection] = useState<Connection | undefined>();
-  const [rmState, setRmState] = useState<IndexInfo[] | undefined>();
-  const [aliasRmState, setAliasRmState] = useState<AliasInfo[] | undefined>();
   const [editor, setEditor] = useState(() => LineEditor.create());
   return {
     status,
     setStatus,
+    connection,
+    setConnection,
+    editor,
+    setEditor,
+    ...useScreenState(),
+  };
+}
+
+/** The screen related part of the session state. */
+type ScreenState = Omit<
+  SessionState,
+  | 'status'
+  | 'setStatus'
+  | 'connection'
+  | 'setConnection'
+  | 'editor'
+  | 'setEditor'
+>;
+
+/**
+ * Owns the state of the input-area screens.
+ *
+ * @returns The values and their setters.
+ */
+function useScreenState(): ScreenState {
+  const [pendingProfile, setPendingProfile] = useState<Profile | undefined>();
+  const [addState, setAddProfileState] = useState<AddProfileState>();
+  const [rmState, setRmState] = useState<IndexInfo[] | undefined>();
+  const [aliasRmState, setAliasRmState] = useState<AliasInfo[] | undefined>();
+  const [templateApplyState, setTemplateApplyState] = useState<
+    string | undefined
+  >();
+  const [templateRmState, setTemplateRmState] = useState<
+    TemplateInfo[] | undefined
+  >();
+  return {
     pendingProfile,
     setPendingProfile,
     addState,
     setAddProfileState,
-    connection,
-    setConnection,
     rmState,
     setRmState,
     aliasRmState,
     setAliasRmState,
-    editor,
-    setEditor,
+    templateApplyState,
+    setTemplateApplyState,
+    templateRmState,
+    setTemplateRmState,
   };
 }
 
@@ -151,6 +185,7 @@ function createActions(deps: SessionDeps): SessionActions {
     },
     ...createIndexActions(deps),
     ...createAliasActions(deps),
+    ...createTemplateActions(deps),
   };
 }
 
