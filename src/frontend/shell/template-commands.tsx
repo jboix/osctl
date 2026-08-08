@@ -1,11 +1,10 @@
 // The /template command runners.
 
-import { Text } from 'ink';
 import { describeFailure, listTemplates } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
-import { Table } from '../components/table';
+import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { matchesPattern, requireConnection } from './command-utils';
+import { pushFailure, pushLine } from './output';
 
 /**
  * Lists the index templates as a table block.
@@ -26,33 +25,35 @@ export async function runTemplateLs(
     const templates = (await listTemplates(connection)).filter((template) =>
       matchesPattern(template.name, pattern),
     );
-    context.session.push(
-      templates.length === 0 ? (
-        <Text dimColor>No templates match.</Text>
-      ) : (
-        <Table
-          columns={[
-            { label: 'template' },
-            { label: 'patterns' },
-            { label: 'priority', alignRight: true },
-            { label: 'version', alignRight: true },
-          ]}
-          rows={templates.map((template) => [
-            template.name,
-            template.patterns.join(', '),
-            template.priority === undefined ? '' : String(template.priority),
-            template.version === undefined ? '' : String(template.version),
-          ])}
-        />
-      ),
-    );
+    if (templates.length === 0) {
+      pushLine(context.session, 'No templates match.', 'dim');
+      return;
+    }
+    const table: TableProps = {
+      columns: [
+        { label: 'template' },
+        { label: 'patterns' },
+        { label: 'priority', alignRight: true },
+        { label: 'version', alignRight: true },
+      ],
+      rows: templates.map((template) => [
+        template.name,
+        template.patterns.join(', '),
+        template.priority === undefined ? '' : String(template.priority),
+        template.version === undefined ? '' : String(template.version),
+      ]),
+    };
+    context.session.push(<Table {...table} />, {
+      label: 'the template list',
+      text: tableLines(table).join('\n'),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
 /**
- * Prints the named template, or opens the picker without a name.
+ * Shows the named template, or opens the picker without a name.
  *
  * @param context - What the command can act on.
  * @param name - The template name; a picker opens when omitted.
@@ -97,7 +98,7 @@ export async function runTemplateRm(
       matchesPattern(template.name, pattern),
     );
     if (templates.length === 0) {
-      context.session.push(<Text dimColor>No templates match.</Text>);
+      pushLine(context.session, 'No templates match.', 'dim');
       return;
     }
     context.session.startRemove({
@@ -108,6 +109,6 @@ export async function runTemplateRm(
       })),
     });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }

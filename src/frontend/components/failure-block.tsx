@@ -22,3 +22,19 @@ export function FailureBlock(props: {
     </Box>
   );
 }
+
+/**
+ * Formats a failure as the plain text the block renders.
+ *
+ * @param props - The failure message and the optional response body.
+ * @param props.message - One sentence describing what happened.
+ * @param props.details - The response body, pretty printed.
+ * @returns The failure text.
+ */
+export function failureText(props: {
+  message: string;
+  details?: string;
+}): string {
+  const lead = `✖ ${props.message}`;
+  return props.details === undefined ? lead : `${lead}\n${props.details}`;
+}

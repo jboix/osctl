@@ -13,6 +13,7 @@ import { ProfileAddWizard } from '../screens/profile-add';
 import { ProfileSelect } from '../screens/profile-select';
 import { RemoveScreen } from '../screens/remove';
 import { CommandInput } from './command-input';
+import { pushLine } from './output';
 import type { Session } from './session';
 
 /** The input-area screens, one route per path. */
@@ -129,9 +130,7 @@ function ProfileDefaultRoute(props: { session: Session }): ReactElement {
       onCancel={() => navigate('/')}
       onPick={(profile) => {
         new ProfileStore().setDefault(profile.name);
-        props.session.push(
-          <Text>Default profile set to "{profile.name}".</Text>,
-        );
+        pushLine(props.session, `Default profile set to "${profile.name}".`);
         navigate('/');
       }}
       profiles={config.profiles}

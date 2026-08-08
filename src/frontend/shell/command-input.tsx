@@ -59,8 +59,9 @@ interface KeystrokeDeps {
 }
 
 /**
- * Applies one keystroke: tab moves the focus, a focused list consumes its
- * keys, everything else goes to the editor.
+ * Applies one keystroke: ctrl+o folds or expands the shown documents, tab
+ * moves the focus, a focused list consumes its keys, everything else goes to
+ * the editor.
  *
  * @param input - The printable characters of the keystroke.
  * @param key - The special-key flags.
@@ -68,6 +69,10 @@ interface KeystrokeDeps {
  * @returns Nothing.
  */
 function handleKeystroke(input: string, key: Key, deps: KeystrokeDeps): void {
+  if (key.ctrl && input === 'o') {
+    deps.context.session.toggleDocs();
+    return;
+  }
   if (key.tab) {
     deps.suggestions.toggle();
     return;
@@ -142,7 +147,8 @@ function applyEditorKey(input: string, key: Key, deps: KeystrokeDeps): void {
 }
 
 /**
- * Echoes the line to the scrollback and routes it.
+ * Echoes the line to the scrollback and routes it. The echo keeps the copy
+ * payload of the previous output, so /copy can name it.
  *
  * @param line - The line to run.
  * @param context - What the commands act on.
@@ -154,6 +160,7 @@ function runLine(line: string, context: CommandContext): void {
       {'> '}
       {line}
     </Text>,
+    'keep',
   );
   route(line, context);
 }

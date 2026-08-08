@@ -1,18 +1,17 @@
 // The /index command runners.
 
-import { Text } from 'ink';
-import type { ReactElement } from 'react';
 import {
+  type Connection,
   createIndex,
   describeFailure,
   type IndexInfo,
   listIndices,
   rollover,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
-import { Table } from '../components/table';
+import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
+import { pushFailure, pushLine } from './output';
 
 /**
  * Lists the indices and renders them as a table block.
@@ -31,15 +30,17 @@ export async function runIndexLs(
   }
   try {
     const indices = await listIndices(connection, pattern);
-    context.session.push(
-      indices.length === 0 ? (
-        <Text dimColor>No indices match.</Text>
-      ) : (
-        <IndexTable indices={indices} />
-      ),
-    );
+    if (indices.length === 0) {
+      pushLine(context.session, 'No indices match.', 'dim');
+      return;
+    }
+    const table = indexTable(indices);
+    context.session.push(<Table {...table} />, {
+      label: 'the index list',
+      text: tableLines(table).join('\n'),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
@@ -61,12 +62,12 @@ export async function runIndexRm(
   try {
     const indices = await listIndices(connection, pattern);
     if (indices.length === 0) {
-      context.session.push(<Text dimColor>No indices match.</Text>);
+      pushLine(context.session, 'No indices match.', 'dim');
       return;
     }
     context.session.startRemove({ kind: 'index', targets: indices });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
@@ -87,35 +88,53 @@ export async function runIndexCreate(
     return;
   }
   if (name === undefined) {
-    context.session.push(
-      <Text color="yellow">
-        Usage: /index create {'<name>'} [write-alias].
-      </Text>,
+    pushLine(
+      context.session,
+      'Usage: /index create <name> [write-alias].',
+      'yellow',
     );
     return;
   }
   if (!/-\d{6}$/.test(name)) {
-    context.session.push(
-      <Text color="yellow">
-        The name has no numeric suffix like -000001: rollover will not work.
-      </Text>,
+    pushLine(
+      context.session,
+      'The name has no numeric suffix like -000001: rollover will not work.',
+      'yellow',
     );
   }
   if (writeAlias === undefined) {
     context.session.startIndexEdit(name);
     return;
   }
+  await createWithAlias(context, connection, name, writeAlias);
+}
+
+/**
+ * Creates the index with its write alias and reports the outcome.
+ *
+ * @param context - What the command can act on.
+ * @param connection - The live connection.
+ * @param name - The index name.
+ * @param writeAlias - The write alias to attach.
+ * @returns Nothing.
+ */
+async function createWithAlias(
+  context: CommandContext,
+  connection: Connection,
+  name: string,
+  writeAlias: string,
+): Promise<void> {
   try {
     await createIndex(connection, name, {
       aliases: { [writeAlias]: { is_write_index: true } },
     });
-    context.session.push(
-      <Text color="green">
-        ✔ Index "{name}" created with write alias "{writeAlias}".
-      </Text>,
+    pushLine(
+      context.session,
+      `✔ Index "${name}" created with write alias "${writeAlias}".`,
+      'green',
     );
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
@@ -135,53 +154,52 @@ export async function runIndexRollover(
     return;
   }
   if (alias === undefined) {
-    context.session.push(
-      <Text color="yellow">Usage: /index rollover {'<alias>'}.</Text>,
-    );
+    pushLine(context.session, 'Usage: /index rollover <alias>.', 'yellow');
     return;
   }
   try {
     const result = await rollover(connection, alias);
-    context.session.push(
-      <Text color="green">
-        ✔ Rolled over {alias}: {result.oldIndex} → {result.newIndex}.
-      </Text>,
+    pushLine(
+      context.session,
+      `✔ Rolled over ${alias}: ${result.oldIndex} → ${result.newIndex}.`,
+      'green',
     );
-    context.session.push(
-      result.reapplied.length === 0 ? (
-        <Text dimColor>No aliases to reapply.</Text>
-      ) : (
-        <Text>Reapplied aliases: {result.reapplied.join(', ')}.</Text>
-      ),
-    );
+    if (result.reapplied.length === 0) {
+      pushLine(context.session, 'No aliases to reapply.', 'dim');
+    } else {
+      pushLine(
+        context.session,
+        `Reapplied aliases: ${result.reapplied.join(', ')}.`,
+      );
+    }
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
 /**
- * Renders the index listing as a table.
+ * Builds the index listing table.
  *
- * @param props - The component props.
- * @param props.indices - The indices to list.
- * @returns The table element.
+ * @param indices - The indices to list.
+ * @returns The table contract.
  */
-function IndexTable(props: { indices: IndexInfo[] }): ReactElement {
-  const columns = [
-    { label: 'index' },
-    { label: 'health' },
-    { label: 'docs', alignRight: true },
-    { label: 'size', alignRight: true },
-    { label: 'created' },
-    { label: 'aliases (*: write)' },
-  ];
-  const rows = props.indices.map((index) => [
-    index.name,
-    index.health,
-    String(index.docsCount),
-    index.storeSize,
-    index.creationDate,
-    index.aliases.join(', '),
-  ]);
-  return <Table columns={columns} rows={rows} />;
+function indexTable(indices: IndexInfo[]): TableProps {
+  return {
+    columns: [
+      { label: 'index' },
+      { label: 'health' },
+      { label: 'docs', alignRight: true },
+      { label: 'size', alignRight: true },
+      { label: 'created' },
+      { label: 'aliases (*: write)' },
+    ],
+    rows: indices.map((index) => [
+      index.name,
+      index.health,
+      String(index.docsCount),
+      index.storeSize,
+      index.creationDate,
+      index.aliases.join(', '),
+    ]),
+  };
 }

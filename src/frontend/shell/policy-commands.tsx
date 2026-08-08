@@ -1,11 +1,10 @@
 // The /policy command runners.
 
-import { Text } from 'ink';
 import { describeFailure, explainIsm, listPolicies } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
-import { Table } from '../components/table';
+import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { matchesPattern, requireConnection } from './command-utils';
+import { pushFailure, pushLine } from './output';
 
 /**
  * Lists the ISM policies as a table block.
@@ -26,31 +25,33 @@ export async function runPolicyLs(
     const policies = (await listPolicies(connection)).filter((policy) =>
       matchesPattern(policy.name, pattern),
     );
-    context.session.push(
-      policies.length === 0 ? (
-        <Text dimColor>No policies match.</Text>
-      ) : (
-        <Table
-          columns={[
-            { label: 'policy' },
-            { label: 'states' },
-            { label: 'description' },
-          ]}
-          rows={policies.map((policy) => [
-            policy.name,
-            policy.states.join(', '),
-            policy.description ?? '',
-          ])}
-        />
-      ),
-    );
+    if (policies.length === 0) {
+      pushLine(context.session, 'No policies match.', 'dim');
+      return;
+    }
+    const table: TableProps = {
+      columns: [
+        { label: 'policy' },
+        { label: 'states' },
+        { label: 'description' },
+      ],
+      rows: policies.map((policy) => [
+        policy.name,
+        policy.states.join(', '),
+        policy.description ?? '',
+      ]),
+    };
+    context.session.push(<Table {...table} />, {
+      label: 'the policy list',
+      text: tableLines(table).join('\n'),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
 /**
- * Prints the named policy, or opens the picker without a name.
+ * Shows the named policy, or opens the picker without a name.
  *
  * @param context - What the command can act on.
  * @param name - The policy name; a picker opens when omitted.
@@ -95,7 +96,7 @@ export async function runPolicyRm(
       matchesPattern(policy.name, pattern),
     );
     if (policies.length === 0) {
-      context.session.push(<Text dimColor>No policies match.</Text>);
+      pushLine(context.session, 'No policies match.', 'dim');
       return;
     }
     context.session.startRemove({
@@ -106,7 +107,7 @@ export async function runPolicyRm(
       })),
     });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
@@ -127,29 +128,31 @@ export async function runPolicyExplain(
   }
   try {
     const rows = await explainIsm(connection, pattern);
-    context.session.push(
-      rows.length === 0 ? (
-        <Text dimColor>No indices match.</Text>
-      ) : (
-        <Table
-          columns={[
-            { label: 'index' },
-            { label: 'policy' },
-            { label: 'state' },
-            { label: 'action' },
-            { label: 'info' },
-          ]}
-          rows={rows.map((row) => [
-            row.index,
-            row.policyId ?? '',
-            row.state ?? '',
-            row.action ?? '',
-            row.info ?? '',
-          ])}
-        />
-      ),
-    );
+    if (rows.length === 0) {
+      pushLine(context.session, 'No indices match.', 'dim');
+      return;
+    }
+    const table: TableProps = {
+      columns: [
+        { label: 'index' },
+        { label: 'policy' },
+        { label: 'state' },
+        { label: 'action' },
+        { label: 'info' },
+      ],
+      rows: rows.map((row) => [
+        row.index,
+        row.policyId ?? '',
+        row.state ?? '',
+        row.action ?? '',
+        row.info ?? '',
+      ]),
+    };
+    context.session.push(<Table {...table} />, {
+      label: 'the ISM report',
+      text: tableLines(table).join('\n'),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }

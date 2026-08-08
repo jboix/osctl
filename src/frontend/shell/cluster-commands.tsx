@@ -7,9 +7,9 @@ import {
   clusterInfo,
   describeFailure,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
+import { pushFailure } from './output';
 
 /**
  * Shows the cluster state: health, blocks, and disk usage.
@@ -24,10 +24,36 @@ export async function runClusterInfo(context: CommandContext): Promise<void> {
   }
   try {
     const info = await clusterInfo(connection);
-    context.session.push(<ClusterReport info={info} />);
+    context.session.push(<ClusterReport info={info} />, {
+      label: 'the cluster report',
+      text: clusterReportText(info),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
+}
+
+/**
+ * Formats the cluster report as the plain text the block renders.
+ *
+ * @param info - The cluster information.
+ * @returns The report text.
+ */
+function clusterReportText(info: ClusterInfo): string {
+  const lines = [
+    `${info.clusterName}: ${info.status}, ${info.nodes} ${
+      info.nodes === 1 ? 'node' : 'nodes'
+    }, ${info.unassignedShards} unassigned shards`,
+    ...(info.blocks.length === 0
+      ? ['No active blocks.']
+      : info.blocks.map((block) => `⚠ ${block}`)),
+    ...info.disk.map((node) =>
+      node.percent === undefined
+        ? `${node.node}: disk usage unknown`
+        : `${node.node}: ${node.percent}% disk used`,
+    ),
+  ];
+  return lines.join('\n');
 }
 
 /**

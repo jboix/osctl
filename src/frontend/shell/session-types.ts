@@ -21,6 +21,20 @@ export interface OutputItem {
   node: ReactNode;
 }
 
+/** What /copy puts on the clipboard. */
+export interface CopyPayload {
+  /** What the confirmation names, like `template "logs"` or `the index list`. */
+  label: string;
+  /** The plain text to copy. */
+  text: string;
+}
+
+/**
+ * Appends a block to the scrollback. The copy payload becomes what /copy
+ * copies; omitting it clears the payload, `'keep'` leaves it unchanged.
+ */
+export type PushFn = (node: ReactNode, copy?: CopyPayload | 'keep') => void;
+
 /** A failed add attempt the wizard resumes from. */
 export interface AddProfileState {
   /** The answers of the failed attempt. */
@@ -141,18 +155,34 @@ export interface SessionState {
   setEditor: (editor: LineEditor) => void;
 }
 
-/** The session the shell renders. */
-export interface Session extends SessionState, SessionActions {
+/** The scrollback blocks and their copy payload. */
+export interface Scrollback {
   /** The scrollback blocks, oldest first. */
   outputs: OutputItem[];
   /** Appends a block to the scrollback. */
-  push: (node: ReactNode) => void;
+  push: PushFn;
+  /** Pushes a document block and makes it the copy payload. */
+  showDoc: (title: string, text: string) => void;
+  /** Whether any document block was pushed. */
+  hasDocs: boolean;
+  /** What /copy copies, set by the last output. */
+  lastCopy?: CopyPayload;
+}
+
+/** The session the shell renders. */
+export interface Session extends SessionState, SessionActions, Scrollback {
+  /** Whether every document block renders expanded. */
+  docsExpanded: boolean;
+  /** Folds or expands every document block, repainting the scrollback. */
+  toggleDocs: () => void;
 }
 
 /** The state, the scrollback, and the navigation the session flows drive. */
 export interface SessionDeps extends SessionState {
   /** Appends an output block. */
-  push: (node: ReactNode) => void;
+  push: PushFn;
+  /** Pushes a document block and makes it the copy payload. */
+  showDoc: (title: string, text: string) => void;
   /** Moves the input area to another screen. */
   navigate: (to: string) => void;
   /** Switches the terminal raw mode, for handing the tty to an editor. */

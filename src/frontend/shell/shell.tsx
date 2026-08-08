@@ -4,6 +4,7 @@ import { Box, Static, useStdout } from 'ink';
 import type { ReactElement } from 'react';
 import { useEffect } from 'react';
 import packageJson from '../../../package.json';
+import { DocFoldContext } from '../components/doc-block';
 import { Header } from '../components/header';
 import { StatusBar } from '../components/status-bar';
 import { ScreenRoutes } from './screen-routes';
@@ -18,19 +19,28 @@ export function Shell(): ReactElement {
   const session = useSession(<Header version={packageJson.version} />);
   useResizeRedraw(session.redraw);
   return (
-    <Box flexDirection="column" paddingX={1}>
-      <Static items={session.outputs} key={session.generation}>
-        {(item: OutputItem) => (
-          <Box key={item.id} paddingX={1}>
-            {item.node}
-          </Box>
-        )}
-      </Static>
-      <Box flexDirection="column" marginTop={1}>
-        <ScreenRoutes session={session} />
-        <StatusBar {...session.status} />
+    <DocFoldContext.Provider value={session.docsExpanded}>
+      <Box flexDirection="column" paddingX={1}>
+        <Static items={session.outputs} key={session.generation}>
+          {(item: OutputItem) => (
+            <Box key={item.id} paddingX={1}>
+              {item.node}
+            </Box>
+          )}
+        </Static>
+        <Box flexDirection="column" marginTop={1}>
+          <ScreenRoutes session={session} />
+          <StatusBar
+            {...session.status}
+            hint={
+              session.lastCopy === undefined
+                ? undefined
+                : '/copy copies the last output'
+            }
+          />
+        </Box>
       </Box>
-    </Box>
+    </DocFoldContext.Provider>
   );
 }
 
