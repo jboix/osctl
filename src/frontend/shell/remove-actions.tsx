@@ -1,6 +1,5 @@
 // The removal flow: indices, aliases, templates, and policies.
 
-import { Text } from 'ink';
 import {
   type Connection,
   deleteAlias,
@@ -10,7 +9,7 @@ import {
   describeFailure,
   ProfileStore,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
+import { pushFailure, pushLine } from './output';
 import type { RemoveState, SessionActions, SessionDeps } from './session-types';
 
 /**
@@ -59,13 +58,11 @@ export function createRemoveActions(
 function removeProfiles(names: string[], deps: SessionDeps): void {
   const store = new ProfileStore();
   for (const name of names) {
-    deps.push(
-      store.remove(name) ? (
-        <Text color="green">✔ Profile "{name}" deleted.</Text>
-      ) : (
-        <Text color="yellow">No profile named "{name}".</Text>
-      ),
-    );
+    if (store.remove(name)) {
+      pushLine(deps, `✔ Profile "${name}" deleted.`, 'green');
+    } else {
+      pushLine(deps, `No profile named "${name}".`, 'yellow');
+    }
   }
 }
 
@@ -87,14 +84,13 @@ async function finishRemove(
   if (state.kind === 'index') {
     try {
       await deleteIndices(connection, names);
-      deps.push(
-        <Text color="green">
-          ✔ Deleted {names.length} {names.length === 1 ? 'index' : 'indices'}:{' '}
-          {names.join(', ')}.
-        </Text>,
+      pushLine(
+        deps,
+        `✔ Deleted ${names.length} ${names.length === 1 ? 'index' : 'indices'}: ${names.join(', ')}.`,
+        'green',
       );
     } catch (error) {
-      deps.push(<FailureBlock {...describeFailure(error)} />);
+      pushFailure(deps, describeFailure(error));
     }
     return;
   }
@@ -119,9 +115,9 @@ async function removeEach(
   for (const name of names) {
     try {
       const detail = await removeOne(kind, name, connection);
-      deps.push(<Text color="green">✔ {detail}</Text>);
+      pushLine(deps, `✔ ${detail}`, 'green');
     } catch (error) {
-      deps.push(<FailureBlock {...describeFailure(error)} />);
+      pushFailure(deps, describeFailure(error));
     }
   }
 }

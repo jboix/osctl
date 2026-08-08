@@ -1,7 +1,5 @@
 // The editor flow: pick a document, edit it in $EDITOR, preview, apply.
 
-import { Text } from 'ink';
-import type { ReactNode } from 'react';
 import {
   applyAliases,
   applyPolicy,
@@ -15,7 +13,6 @@ import {
   listPolicies,
   listTemplates,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
 import { type DiffLine, diffLines } from '../components/line-diff';
 import {
   aliasActionLines,
@@ -26,6 +23,7 @@ import {
 } from './edit-content';
 import { type EditorResult, editText } from './editor';
 import { type JsoncResult, parseJsonc } from './jsonc';
+import { pushFailure, pushLine } from './output';
 import type {
   EditPreviewState,
   SessionActions,
@@ -165,22 +163,22 @@ async function openPicker(
         ? (await listTemplates(connection)).map((template) => template.name)
         : (await listPolicies(connection)).map((policy) => policy.name);
     if (action === 'show' && names.length === 0) {
-      deps.push(
-        <Text dimColor>
-          No {kind === 'template' ? 'templates' : 'policies'}.
-        </Text>,
+      pushLine(
+        deps,
+        `No ${kind === 'template' ? 'templates' : 'policies'}.`,
+        'dim',
       );
       return;
     }
     deps.setEditPick({ kind, names, action });
     deps.navigate('/edit/pick');
   } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(deps, describeFailure(error));
   }
 }
 
 /**
- * Prints the named document, pretty printed.
+ * Shows the named document as the foldable block under the scrollback.
  *
  * @param kind - The resource kind.
  * @param name - The document name.
@@ -199,17 +197,13 @@ async function showDocument(
   close(deps);
   try {
     const document = await currentDocument(kind, name, connection);
-    deps.push(
-      document === undefined ? (
-        <Text color="yellow">
-          No {kind} named "{name}".
-        </Text>
-      ) : (
-        <Text>{JSON.stringify(document, null, 2)}</Text>
-      ),
-    );
+    if (document === undefined) {
+      pushLine(deps, `No ${kind} named "${name}".`, 'yellow');
+      return;
+    }
+    deps.showDoc(`${kind} "${name}"`, JSON.stringify(document, null, 2));
   } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(deps, describeFailure(error));
   }
 }
 
@@ -237,11 +231,7 @@ async function openDocument(
       ? undefined
       : await currentDocument(kind, name, connection);
     if (!isNew && current === undefined) {
-      deps.push(
-        <Text color="yellow">
-          No {kind} named "{name}".
-        </Text>,
-      );
+      pushLine(deps, `No ${kind} named "${name}".`, 'yellow');
       close(deps);
       return;
     }
@@ -249,7 +239,7 @@ async function openDocument(
       current === undefined ? undefined : JSON.stringify(current, null, 2);
     runEditor({ kind, name, body: base ?? editSkeleton(kind), base }, deps);
   } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(deps, describeFailure(error));
     close(deps);
   }
 }
@@ -289,7 +279,7 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
     const reference = aliasReferenceLines(await listAliases(connection));
     runEditor({ kind: 'alias', body: editSkeleton('alias'), reference }, deps);
   } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(deps, describeFailure(error));
   }
 }
 
@@ -308,9 +298,9 @@ function runEditor(target: EditTarget, deps: SessionDeps): void {
     { setRawMode: deps.setRawMode, redraw: deps.redraw },
   );
   const parsed = parseJsonc(result.text);
-  const abort = abortBlock(result, parsed);
+  const abort = abortLine(result, parsed);
   if (abort !== undefined) {
-    deps.push(abort);
+    pushLine(deps, abort.text, abort.tone);
     close(deps);
     return;
   }
@@ -325,27 +315,26 @@ function runEditor(target: EditTarget, deps: SessionDeps): void {
  *
  * @param result - The editor outcome.
  * @param parsed - The parsed file content.
- * @returns The abort block, or undefined when the edit goes on to a preview.
+ * @returns The abort line, or undefined when the edit goes on to a preview.
  */
-function abortBlock(
+function abortLine(
   result: EditorResult,
   parsed: JsoncResult,
-): ReactNode | undefined {
+): { text: string; tone: 'yellow' | 'dim' } | undefined {
   if (result.error !== undefined) {
-    return <Text color="yellow">{result.error}</Text>;
+    return { text: result.error, tone: 'yellow' };
   }
   if (!result.changed) {
-    return <Text dimColor>Edit aborted: the file was not changed.</Text>;
+    return { text: 'Edit aborted: the file was not changed.', tone: 'dim' };
   }
   if (parsed.kind === 'empty') {
-    return <Text dimColor>Edit aborted: the file is empty.</Text>;
+    return { text: 'Edit aborted: the file is empty.', tone: 'dim' };
   }
   if (parsed.kind === 'error') {
-    return (
-      <Text color="yellow">
-        {parsed.message} Nothing applied. Your edit is kept at {result.path}.
-      </Text>
-    );
+    return {
+      text: `${parsed.message} Nothing applied. Your edit is kept at ${result.path}.`,
+      tone: 'yellow',
+    };
   }
   return undefined;
 }
@@ -417,9 +406,9 @@ async function finish(
     return;
   }
   try {
-    deps.push(await applyEdit(preview, connection));
+    pushLine(deps, await applyEdit(preview, connection), 'green');
   } catch (error) {
-    deps.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(deps, describeFailure(error));
   }
 }
 
@@ -428,40 +417,27 @@ async function finish(
  *
  * @param preview - The confirmed edit.
  * @param connection - The live connection.
- * @returns The confirmation block.
+ * @returns The confirmation line.
  */
 async function applyEdit(
   preview: EditPreviewState,
   connection: Connection,
-): Promise<ReactNode> {
+): Promise<string> {
   const name = preview.name ?? '';
   switch (preview.kind) {
     case 'template':
       await applyTemplate(connection, name, preview.payload);
-      return (
-        <Text color="green">
-          ✔ Template "{name}" saved. Existing indices keep their settings until
-          a rollover.
-        </Text>
-      );
+      return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
     case 'policy': {
       const outcome = await applyPolicy(connection, name, preview.payload);
-      return (
-        <Text color="green">
-          ✔ Policy "{name}" {outcome}.
-        </Text>
-      );
+      return `✔ Policy "${name}" ${outcome}.`;
     }
     case 'alias': {
       const count = await applyAliases(connection, preview.payload);
-      return (
-        <Text color="green">
-          ✔ Applied {count} alias action{count === 1 ? '' : 's'}.
-        </Text>
-      );
+      return `✔ Applied ${count} alias action${count === 1 ? '' : 's'}.`;
     }
     case 'index':
       await createIndex(connection, name, preview.payload);
-      return <Text color="green">✔ Index "{name}" created.</Text>;
+      return `✔ Index "${name}" created.`;
   }
 }

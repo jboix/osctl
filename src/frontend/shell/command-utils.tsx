@@ -1,8 +1,8 @@
 // Shared helpers of the command runners.
 
-import { Text } from 'ink';
 import type { Connection } from '../../engine/engine';
 import type { CommandContext } from './command-types';
+import { pushLine } from './output';
 
 /**
  * Returns the live connection, reporting when there is none.
@@ -15,9 +15,7 @@ export function requireConnection(
 ): Connection | undefined {
   const connection = context.session.connection;
   if (connection === undefined) {
-    context.session.push(
-      <Text color="yellow">Not connected. Run /profile add.</Text>,
-    );
+    pushLine(context.session, 'Not connected. Run /profile add.', 'yellow');
   }
   return connection;
 }

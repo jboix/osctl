@@ -26,25 +26,33 @@ export interface TableProps {
  * @returns The table element.
  */
 export function Table(props: TableProps): ReactElement {
+  const [header, ...rows] = tableLines(props);
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>{header}</Text>
+      {rows.map((line, index) => (
+        <Text key={props.rows[index]?.[0]}>{line}</Text>
+      ))}
+    </Box>
+  );
+}
+
+/**
+ * Formats the table as plain lines: the header first, then the rows.
+ *
+ * @param props - The table contract.
+ * @returns The formatted lines.
+ */
+export function tableLines(props: TableProps): string[] {
   const widths = props.columns.map((column, index) =>
     Math.max(
       column.label.length,
       ...props.rows.map((row) => (row[index] ?? '').length),
     ),
   );
-  return (
-    <Box flexDirection="column">
-      <Text dimColor>
-        {formatRow(
-          props.columns.map((column) => column.label),
-          widths,
-          props.columns,
-        )}
-      </Text>
-      {props.rows.map((row) => (
-        <Text key={row[0]}>{formatRow(row, widths, props.columns)}</Text>
-      ))}
-    </Box>
+  const header = props.columns.map((column) => column.label);
+  return [header, ...props.rows].map((row) =>
+    formatRow(row, widths, props.columns),
   );
 }
 

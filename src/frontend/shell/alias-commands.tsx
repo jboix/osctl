@@ -7,9 +7,9 @@ import {
   describeFailure,
   listAliases,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
 import type { CommandContext } from './command-types';
 import { matchesPattern, requireConnection } from './command-utils';
+import { pushFailure, pushLine } from './output';
 
 /**
  * Shows the alias tree.
@@ -30,15 +30,16 @@ export async function runAliasLs(
     const aliases = (await listAliases(connection)).filter((alias) =>
       matchesPattern(alias.name, pattern),
     );
-    context.session.push(
-      aliases.length === 0 ? (
-        <Text dimColor>No aliases match.</Text>
-      ) : (
-        <AliasTree aliases={aliases} />
-      ),
-    );
+    if (aliases.length === 0) {
+      pushLine(context.session, 'No aliases match.', 'dim');
+      return;
+    }
+    context.session.push(<AliasTree aliases={aliases} />, {
+      label: 'the alias list',
+      text: aliasTreeText(aliases),
+    });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
 }
 
@@ -62,13 +63,43 @@ export async function runAliasRm(
       matchesPattern(alias.name, pattern),
     );
     if (aliases.length === 0) {
-      context.session.push(<Text dimColor>No aliases match.</Text>);
+      pushLine(context.session, 'No aliases match.', 'dim');
       return;
     }
     context.session.startRemove({ kind: 'alias', targets: aliases });
   } catch (error) {
-    context.session.push(<FailureBlock {...describeFailure(error)} />);
+    pushFailure(context.session, describeFailure(error));
   }
+}
+
+/**
+ * Formats one target line of the alias tree, without the branch prefix.
+ *
+ * @param target - The alias target.
+ * @returns The line text.
+ */
+function targetText(target: AliasInfo['targets'][number]): string {
+  const write = target.write ? ' (write)' : '';
+  const filtered = target.filtered ? ' filtered' : '';
+  return `${target.index}${write}${filtered}`;
+}
+
+/**
+ * Formats the alias tree as the plain text the block renders.
+ *
+ * @param aliases - The aliases to format.
+ * @returns The tree text.
+ */
+function aliasTreeText(aliases: AliasInfo[]): string {
+  return aliases
+    .flatMap((alias) => [
+      alias.name,
+      ...alias.targets.map(
+        (target, index) =>
+          `${index === alias.targets.length - 1 ? '└─ ' : '├─ '}${targetText(target)}`,
+      ),
+    ])
+    .join('\n');
 }
 
 /**

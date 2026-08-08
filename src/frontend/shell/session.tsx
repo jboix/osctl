@@ -1,6 +1,6 @@
 // Session state for the shell: startup, scrollback outputs, and the status line.
 
-import { Text, useStdin, useStdout } from 'ink';
+import { useStdin, useStdout } from 'ink';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -13,17 +13,20 @@ import {
   type Profile,
   ProfileStore,
 } from '../../engine/engine';
-import { FailureBlock } from '../components/failure-block';
+import { DocBlock } from '../components/doc-block';
 import { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
 
 import type {
   AddProfileState,
+  CopyPayload,
   EditPickState,
   EditPreviewState,
   OutputItem,
+  PushFn,
   RemoveState,
+  Scrollback,
   Session,
   SessionActions,
   SessionDeps,
@@ -33,6 +36,7 @@ import type {
 export type { OutputItem, Session };
 
 import { createEditActions } from './edit-actions';
+import { pushFailure, pushLine } from './output';
 import { createRemoveActions } from './remove-actions';
 
 /**
@@ -44,12 +48,40 @@ import { createRemoveActions } from './remove-actions';
 export function useSession(header: ReactNode): Session {
   const navigate = useNavigate();
   const { setRawMode } = useStdin();
-  const { outputs, push } = useOutputs(header);
+  const scrollback = useScrollback(header);
   const state = useSessionState();
-  const deps: SessionDeps = { ...state, push, navigate, setRawMode };
+  const fold = useDocFold(scrollback.hasDocs, state.redraw);
+  const deps: SessionDeps = {
+    ...state,
+    push: scrollback.push,
+    showDoc: scrollback.showDoc,
+    navigate,
+    setRawMode,
+  };
   useStartup(deps);
   useStatusRefresh(state.connection, state.setStatus);
-  return { outputs, push, ...state, ...createActions(deps) };
+  return { ...scrollback, ...state, ...fold, ...createActions(deps) };
+}
+
+/**
+ * Owns the global fold state of the document blocks.
+ *
+ * @param hasDocs - Whether any document block was pushed.
+ * @param redraw - Clears the terminal and repaints everything.
+ * @returns The fold state and its toggle.
+ */
+function useDocFold(
+  hasDocs: boolean,
+  redraw: () => void,
+): Pick<Session, 'docsExpanded' | 'toggleDocs'> {
+  const [docsExpanded, setDocsExpanded] = useState(false);
+  const toggleDocs = useCallback(() => {
+    if (hasDocs) {
+      setDocsExpanded((expanded) => !expanded);
+      redraw();
+    }
+  }, [hasDocs, redraw]);
+  return { docsExpanded, toggleDocs };
 }
 
 /**
@@ -200,22 +232,32 @@ async function refreshStatus(
 }
 
 /**
- * Owns the scrollback blocks.
+ * Owns the scrollback: the frozen blocks, the foldable document below them,
+ * and the copy payload of the last output.
  *
  * @param header - The block shown first.
- * @returns The blocks and the push function.
+ * @returns The scrollback.
  */
-function useOutputs(header: ReactNode): {
-  outputs: OutputItem[];
-  push: (node: ReactNode) => void;
-} {
+function useScrollback(header: ReactNode): Scrollback {
   const [outputs, setOutputs] = useState<OutputItem[]>([
     { id: 0, node: header },
   ]);
-  const push = useCallback((node: ReactNode) => {
+  const [lastCopy, setLastCopy] = useState<CopyPayload | undefined>();
+  const [hasDocs, setHasDocs] = useState(false);
+  const push = useCallback<PushFn>((node, copy) => {
     setOutputs((previous) => [...previous, { id: previous.length, node }]);
+    if (copy !== 'keep') {
+      setLastCopy(copy);
+    }
   }, []);
-  return { outputs, push };
+  const showDoc = useCallback(
+    (title: string, text: string) => {
+      setHasDocs(true);
+      push(<DocBlock text={text} title={title} />, { label: title, text });
+    },
+    [push],
+  );
+  return { outputs, push, showDoc, hasDocs, lastCopy };
 }
 
 /**
@@ -265,10 +307,10 @@ function createActions(deps: SessionDeps): SessionActions {
 async function start(deps: SessionDeps): Promise<void> {
   const profile = new ProfileStore().defaultProfile();
   if (profile === undefined) {
-    deps.push(
-      <Text color="yellow">
-        No profile found. Run /profile add to connect to a cluster.
-      </Text>,
+    pushLine(
+      deps,
+      'No profile found. Run /profile add to connect to a cluster.',
+      'yellow',
     );
     return;
   }
@@ -291,7 +333,7 @@ async function connectTo(profile: Profile, deps: SessionDeps): Promise<void> {
   }
   const failure = await probe(profile, undefined, deps);
   if (failure !== undefined) {
-    deps.push(<FailureBlock {...failure} />);
+    pushFailure(deps, failure);
   }
 }
 
@@ -310,7 +352,7 @@ async function verifyPassword(
 ): Promise<void> {
   const failure = await probe(profile, password, deps);
   if (failure !== undefined) {
-    deps.push(<FailureBlock {...failure} />);
+    pushFailure(deps, failure);
     deps.navigate('/password');
   }
 }
@@ -341,7 +383,7 @@ async function finishProfileAdd(
   const store = new ProfileStore();
   store.upsert(profile);
   store.setDefault(profile.name);
-  deps.push(<Text>Profile "{profile.name}" saved as default.</Text>);
+  pushLine(deps, `Profile "${profile.name}" saved as default.`);
 }
 
 /**
@@ -367,10 +409,10 @@ async function probe(
       clusterName: result.clusterName,
       status: result.status,
     });
-    deps.push(
-      <Text color="green">
-        ✔ Connected to {result.clusterName} ({result.status}).
-      </Text>,
+    pushLine(
+      deps,
+      `✔ Connected to ${result.clusterName} (${result.status}).`,
+      'green',
     );
     return undefined;
   } catch (error) {

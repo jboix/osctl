@@ -54,9 +54,32 @@ typing; the slash form is the official one.
 | `/profile ls`             | List the profiles as a select; picking one switches to it    |
 | `/profile default [name]` | Set the default profile, interactively when no name is given |
 | `/profile rm [pattern]`   | Delete profiles from a selection                             |
+| `/copy`                   | Copy the last command output to the clipboard                |
 | `/help`                   | Show the available commands                                  |
 | `/version`                | Print the osctl version                                      |
 | `/exit`                   | Quit osctl                                                   |
+
+## Shown documents
+
+`/template show` and `/policy show` render the document as a block with a summary line
+naming the document and its line count.
+
+- Documents longer than 10 lines render folded: the first 10 lines, then a marker with
+  the hidden line count.
+- Ctrl+o folds or expands every shown document at once, including those in the
+  scrollback, by repainting it.
+- While there is something to copy, the right edge of the status bar shows the hint
+  `/copy copies the last output`.
+
+## /copy
+
+`/copy` copies the last command output as plain text: the JSON of a shown document, the
+rendered text of a table or tree, the text of a failure report or message.
+
+- A shown document is copied in full, folded or not.
+- The copy uses the platform tool: `pbcopy` on macOS, `wl-copy`, `xclip`, or `clip.exe`
+  (WSL) on Linux, `clip` on Windows. Without a working tool it falls back to the OSC 52
+  escape sequence, which most terminals apply.
 
 ## The editor
 

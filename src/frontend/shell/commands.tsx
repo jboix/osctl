@@ -8,12 +8,14 @@ import { runAliasLs, runAliasRm } from './alias-commands';
 import { runClusterInfo } from './cluster-commands';
 import type { Command, CommandContext } from './command-types';
 import { matchesPattern, requireConnection } from './command-utils';
+import { runCopy } from './copy-command';
 import {
   runIndexCreate,
   runIndexLs,
   runIndexRm,
   runIndexRollover,
 } from './index-commands';
+import { pushLine } from './output';
 import {
   runPolicyApply,
   runPolicyExplain,
@@ -141,15 +143,24 @@ const COMMANDS: Command[] = [
     run: (context, args) => runProfileRm(context, args[0]),
   },
   {
+    name: '/copy',
+    description: 'Copy the last command output to the clipboard',
+    run: (context) => runCopy(context),
+  },
+  {
     name: '/help',
     description: 'Show the available commands',
-    run: (context) => context.session.push(<Help />),
+    run: (context) =>
+      context.session.push(<Help />, {
+        label: 'the command list',
+        text: helpLines().join('\n'),
+      }),
   },
   {
     name: '/version',
     description: 'Print the osctl version',
     run: (context) =>
-      context.session.push(<Text>osctl v{packageJson.version}</Text>),
+      pushLine(context.session, `osctl v${packageJson.version}`),
   },
   {
     name: '/exit',
@@ -188,8 +199,10 @@ export function route(line: string, context: CommandContext): void {
       normalized.startsWith(`${candidate.name} `),
   );
   if (command === undefined) {
-    context.session.push(
-      <Text color="yellow">Unknown command "{line}". Type /help.</Text>,
+    pushLine(
+      context.session,
+      `Unknown command "${line}". Type /help.`,
+      'yellow',
     );
     return;
   }
@@ -212,12 +225,14 @@ function runProfileDefault(context: CommandContext, args: string[]): void {
   }
   const profile = new ProfileStore().setDefault(name);
   if (profile === undefined) {
-    context.session.push(
-      <Text color="yellow">No profile named "{name}". Run /profile ls.</Text>,
+    pushLine(
+      context.session,
+      `No profile named "${name}". Run /profile ls.`,
+      'yellow',
     );
     return;
   }
-  context.session.push(<Text>Default profile set to "{name}".</Text>);
+  pushLine(context.session, `Default profile set to "${name}".`);
 }
 
 /**
@@ -232,7 +247,7 @@ function runProfileRm(context: CommandContext, pattern?: string): void {
     .load()
     .profiles.filter((profile) => matchesPattern(profile.name, pattern));
   if (profiles.length === 0) {
-    context.session.push(<Text dimColor>No profiles match.</Text>);
+    pushLine(context.session, 'No profiles match.', 'dim');
     return;
   }
   context.session.startRemove({
@@ -245,6 +260,17 @@ function runProfileRm(context: CommandContext, pattern?: string): void {
 }
 
 /**
+ * Formats the command list as plain lines, one per command.
+ *
+ * @returns The formatted lines.
+ */
+function helpLines(): string[] {
+  return COMMANDS.map(
+    (command) => `${command.name.padEnd(NAME_WIDTH)} ${command.description}`,
+  );
+}
+
+/**
  * Renders the command list from the registry.
  *
  * @returns The help block.
@@ -252,10 +278,8 @@ function runProfileRm(context: CommandContext, pattern?: string): void {
 function Help(): ReactElement {
   return (
     <Box flexDirection="column">
-      {COMMANDS.map((command) => (
-        <Text key={command.name}>
-          {command.name.padEnd(NAME_WIDTH)} {command.description}
-        </Text>
+      {helpLines().map((line) => (
+        <Text key={line}>{line}</Text>
       ))}
     </Box>
   );
