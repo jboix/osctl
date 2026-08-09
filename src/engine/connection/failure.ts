@@ -34,6 +34,16 @@ export function describeFailure(error: unknown): FailureReport {
 }
 
 /**
+ * Reads the status code of a client error.
+ *
+ * @param error - The thrown value.
+ * @returns The status code, when the error carries one.
+ */
+export function statusOf(error: unknown): number | undefined {
+  return metaOf(error)?.statusCode;
+}
+
+/**
  * Reads the response metadata of a client error.
  *
  * @param error - The thrown value.

@@ -1,9 +1,10 @@
 // The /policy command runners.
 
 import { describeFailure, explainIsm, listPolicies } from '../../engine/engine';
+import { matchesPattern } from '../../utils/pattern';
 import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
-import { matchesPattern, requireConnection } from './command-utils';
+import { requireConnection } from './command-utils';
 import { pushFailure, pushLine } from './output';
 
 /**

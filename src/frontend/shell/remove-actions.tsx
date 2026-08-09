@@ -9,6 +9,7 @@ import {
   describeFailure,
   ProfileStore,
 } from '../../engine/engine';
+import { backupStore } from './backup-actions';
 import { pushFailure, pushLine } from './output';
 import type { RemoveState, SessionActions, SessionDeps } from './session-types';
 
@@ -41,6 +42,10 @@ export function createRemoveActions(
         removeProfiles(names, deps);
         return;
       }
+      if (state.kind === 'backup') {
+        removeBackups(names, deps);
+        return;
+      }
       if (deps.connection !== undefined) {
         void finishRemove(state, names, deps.connection, deps);
       }
@@ -67,6 +72,28 @@ function removeProfiles(names: string[], deps: SessionDeps): void {
 }
 
 /**
+ * Deletes the confirmed backups and reports each outcome.
+ *
+ * @param ids - The confirmed backup identifiers.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+function removeBackups(ids: string[], deps: SessionDeps): void {
+  const store = backupStore(deps);
+  if (store === undefined) {
+    pushLine(deps, 'No profile selected. Run /profile add.', 'yellow');
+    return;
+  }
+  for (const id of ids) {
+    if (store.remove(id)) {
+      pushLine(deps, `✔ Backup deleted: ${id}.`, 'green');
+    } else {
+      pushLine(deps, `No backup ${id}.`, 'yellow');
+    }
+  }
+}
+
+/**
  * Deletes the confirmed resources and reports the outcomes.
  *
  * @param state - The removal being run.
@@ -76,7 +103,7 @@ function removeProfiles(names: string[], deps: SessionDeps): void {
  * @returns Nothing.
  */
 async function finishRemove(
-  state: Exclude<RemoveState, { kind: 'profile' }>,
+  state: Exclude<RemoveState, { kind: 'profile' | 'backup' }>,
   names: string[],
   connection: Connection,
   deps: SessionDeps,

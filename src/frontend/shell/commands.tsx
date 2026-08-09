@@ -4,10 +4,17 @@ import { Box, Text } from 'ink';
 import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
 import { ProfileStore } from '../../engine/engine';
+import { matchesPattern } from '../../utils/pattern';
 import { runAliasLs, runAliasRm } from './alias-commands';
+import {
+  runBackupApply,
+  runBackupLs,
+  runBackupRm,
+  runBackupShow,
+} from './backup-commands';
 import { runClusterInfo } from './cluster-commands';
 import type { Command, CommandContext } from './command-types';
-import { matchesPattern, requireConnection } from './command-utils';
+import { requireConnection } from './command-utils';
 import { runCopy } from './copy-command';
 import {
   runIndexCreate,
@@ -121,6 +128,27 @@ const COMMANDS: Command[] = [
     name: '/cluster info',
     description: 'Show the cluster health, blocks, and disk usage',
     run: (context) => void runClusterInfo(context),
+  },
+  {
+    name: '/backup ls',
+    description: 'List the backups of this profile: /backup ls [pattern]',
+    run: (context, args) => runBackupLs(context, args[0]),
+  },
+  {
+    name: '/backup show',
+    description: 'Print a backup, from a picker: /backup show [name]',
+    run: (context, args) => runBackupShow(context, args[0]),
+  },
+  {
+    name: '/backup apply',
+    description:
+      'Restore a backup after a diff confirmation: /backup apply [name]',
+    run: (context, args) => runBackupApply(context, args[0]),
+  },
+  {
+    name: '/backup rm',
+    description: 'Delete backups from a selection: /backup rm [pattern]',
+    run: (context, args) => runBackupRm(context, args[0]),
   },
   {
     name: '/profile add',

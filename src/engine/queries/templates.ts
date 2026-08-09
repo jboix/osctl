@@ -1,6 +1,7 @@
 // The index template queries.
 
 import type { Connection } from '../connection/connection';
+import { statusOf } from '../connection/failure';
 
 /** One template row of /template ls. */
 export interface TemplateInfo {
@@ -46,19 +47,28 @@ interface TemplateEntry {
 }
 
 /**
- * Reads one index template.
+ * Reads one index template. The cluster expands the name as a pattern, so the
+ * response is filtered to the exact name.
  *
  * @param connection - The live connection.
  * @param name - The template name.
- * @returns The template definition. Throws when the template is missing.
+ * @returns The template definition, or undefined when the template is missing.
  */
 export async function getTemplate(
   connection: Connection,
   name: string,
 ): Promise<unknown> {
-  const response = await connection.client.indices.getIndexTemplate({ name });
-  const body = response.body as {
-    index_templates?: { index_template: unknown }[];
-  };
-  return body.index_templates?.[0]?.index_template;
+  try {
+    const response = await connection.client.indices.getIndexTemplate({ name });
+    const body = response.body as {
+      index_templates?: { name: string; index_template: unknown }[];
+    };
+    return body.index_templates?.find((entry) => entry.name === name)
+      ?.index_template;
+  } catch (error) {
+    if (statusOf(error) === 404) {
+      return undefined;
+    }
+    throw error;
+  }
 }

@@ -6,6 +6,7 @@
  *   src/engine/commands   - CQRS write side (plan and execute).
  *   src/engine/engine.ts  - the facade, the only engine module the frontend imports.
  *   src/frontend          - presentation: components, screens, and the REPL shell.
+ *   src/utils             - helpers any layer may use. They import nothing.
  *   src/index.tsx         - the entry. Wires the engine and the shell.
  * Types live with the module that owns them.
  * Run with `bun run arch`.
@@ -64,7 +65,7 @@ module.exports = {
       comment:
         'The config is the bottom of the engine. It imports no other src module.',
       from: { path: '^src/engine/config/', pathNot: '\\.test\\.(ts|tsx)$' },
-      to: { path: '^src/', pathNot: '^src/engine/config/' },
+      to: { path: '^src/', pathNot: '^src/(engine/config/|utils/)' },
     },
     {
       name: 'connection-knows-only-the-config',
@@ -72,7 +73,10 @@ module.exports = {
       comment:
         'The connection wraps the client. It knows no queries or commands.',
       from: { path: '^src/engine/connection/', pathNot: '\\.test\\.(ts|tsx)$' },
-      to: { path: '^src/', pathNot: '^src/engine/(connection|config)/' },
+      to: {
+        path: '^src/',
+        pathNot: '^src/(engine/(connection|config)/|utils/)',
+      },
     },
     {
       name: 'queries-do-not-write',
@@ -82,7 +86,7 @@ module.exports = {
       from: { path: '^src/engine/queries/', pathNot: '\\.test\\.(ts|tsx)$' },
       to: {
         path: '^src/',
-        pathNot: '^src/engine/(queries|connection|config)/',
+        pathNot: '^src/(engine/(queries|connection|config)/|utils/)',
       },
     },
     {
@@ -93,8 +97,16 @@ module.exports = {
       from: { path: '^src/engine/commands/', pathNot: '\\.test\\.(ts|tsx)$' },
       to: {
         path: '^src/',
-        pathNot: '^src/engine/(commands|queries|connection|config)/',
+        pathNot: '^src/(engine/(commands|queries|connection|config)/|utils/)',
       },
+    },
+    {
+      name: 'utils-import-nothing',
+      severity: 'error',
+      comment:
+        'The utils are the shared bottom. They import no other src module.',
+      from: { path: '^src/utils/', pathNot: '\\.test\\.(ts|tsx)$' },
+      to: { path: '^src/', pathNot: '^src/utils/' },
     },
     {
       name: 'only-the-entry-imports-the-shell',

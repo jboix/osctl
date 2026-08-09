@@ -12,6 +12,7 @@ import { IndexRmScreen } from '../screens/index-rm';
 import { ProfileAddWizard } from '../screens/profile-add';
 import { ProfileSelect } from '../screens/profile-select';
 import { RemoveScreen } from '../screens/remove';
+import { backupLabel } from './backup-actions';
 import { CommandInput } from './command-input';
 import { pushLine } from './output';
 import type { Session } from './session';
@@ -41,6 +42,10 @@ const SCREENS: {
   {
     path: '/edit/pick',
     render: (session) => <EditPickRoute session={session} />,
+  },
+  {
+    path: '/backup/pick',
+    render: (session) => <BackupPickRoute session={session} />,
   },
   {
     path: '/edit/preview',
@@ -174,6 +179,7 @@ const NOUNS = {
   template: 'templates',
   policy: 'policies',
   profile: 'profiles',
+  backup: 'backups',
 } as const;
 
 /**
@@ -186,7 +192,7 @@ const NOUNS = {
  * @returns The removal screen element.
  */
 function NamedRemove(props: {
-  kind: 'template' | 'policy' | 'profile';
+  kind: 'template' | 'policy' | 'profile' | 'backup';
   items: { label: string; value: string }[];
   session: Session;
 }): ReactElement {
@@ -202,6 +208,36 @@ function NamedRemove(props: {
       onCancel={props.session.cancelRemove}
       onConfirm={props.session.executeRemove}
       title={`Delete ${NOUNS[props.kind]}`}
+    />
+  );
+}
+
+/**
+ * Renders the /backup/pick screen, or returns home without a picker.
+ *
+ * @param props - The component props.
+ * @param props.session - The running session.
+ * @returns The backup picker element.
+ */
+function BackupPickRoute(props: { session: Session }): ReactElement {
+  const state = props.session.backupPick;
+  if (state === undefined) {
+    return <Navigate to="/" />;
+  }
+  const labels = state.entries.map(backupLabel);
+  return (
+    <DocPick
+      allowNew={false}
+      names={labels}
+      noun="backup"
+      onCancel={props.session.cancelBackupPick}
+      onPick={(label) => {
+        const backup = state.entries[labels.indexOf(label)];
+        if (backup !== undefined) {
+          props.session.pickBackup(backup.id);
+        }
+      }}
+      title={state.action === 'apply' ? 'Restore a backup' : 'Backups'}
     />
   );
 }

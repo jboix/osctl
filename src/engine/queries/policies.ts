@@ -1,6 +1,7 @@
 // The ISM policy queries.
 
 import type { Connection } from '../connection/connection';
+import { statusOf } from '../connection/failure';
 
 /** One policy row of /policy ls. */
 export interface PolicyInfo {
@@ -100,19 +101,6 @@ export async function getPolicy(
     }
     throw error;
   }
-}
-
-/**
- * Reads the status code of a client error.
- *
- * @param error - The thrown value.
- * @returns The status code, when the error carries one.
- */
-function statusOf(error: unknown): number | undefined {
-  if (typeof error !== 'object' || error === null) {
-    return undefined;
-  }
-  return (error as { meta?: { statusCode?: number } }).meta?.statusCode;
 }
 
 /**

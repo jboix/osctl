@@ -1,11 +1,7 @@
 // The editor flow: pick a document, edit it in $EDITOR, preview, apply.
 
 import {
-  applyAliases,
-  applyPolicy,
-  applyTemplate,
   type Connection,
-  createIndex,
   describeFailure,
   getPolicy,
   getTemplate,
@@ -13,22 +9,17 @@ import {
   listPolicies,
   listTemplates,
 } from '../../engine/engine';
-import { type DiffLine, diffLines } from '../components/line-diff';
+import { matchesPattern } from '../../utils/pattern';
 import {
-  aliasActionLines,
   aliasReferenceLines,
-  type EditKind,
   editHeaderLines,
   editSkeleton,
 } from './edit-content';
+import { buildPreview, type EditTarget, finish } from './edit-preview';
 import { type EditorResult, editText } from './editor';
 import { type JsoncResult, parseJsonc } from './jsonc';
 import { pushFailure, pushLine } from './output';
-import type {
-  EditPreviewState,
-  SessionActions,
-  SessionDeps,
-} from './session-types';
+import type { SessionActions, SessionDeps } from './session-types';
 
 /** The actions of the editor flow. */
 type EditActions = Pick<
@@ -41,20 +32,6 @@ type EditActions = Pick<
   | 'cancelEdit'
   | 'confirmEdit'
 >;
-
-/** What one editor run works on. */
-interface EditTarget {
-  /** The resource kind. */
-  kind: EditKind;
-  /** The document name, absent for alias actions. */
-  name?: string;
-  /** The starting body the editor opens on. */
-  body: string;
-  /** The current document body; its presence turns the preview into a diff. */
-  base?: string;
-  /** Reference lines appended to the file header. */
-  reference?: string[];
-}
 
 /**
  * Builds the editor flow actions.
@@ -85,7 +62,8 @@ export function createEditActions(deps: SessionDeps): EditActions {
 }
 
 /**
- * Acts on the named document, or opens the picker without a name.
+ * Acts on the named document, or opens the picker without a name. A name
+ * containing `*` is resolved as a pattern first.
  *
  * @param kind - The resource kind.
  * @param action - What to do with the document.
@@ -101,10 +79,56 @@ function openOrPick(
 ): void {
   if (name === undefined) {
     void openPicker(kind, action, deps);
+  } else if (name.includes('*')) {
+    void resolvePattern(kind, action, name, deps);
   } else if (action === 'show') {
     void showDocument(kind, name, deps);
   } else {
     void openDocument(kind, name, false, deps);
+  }
+}
+
+/**
+ * Resolves a name pattern against the existing documents: a single match acts
+ * directly, several open the picker over them, none reports.
+ *
+ * @param kind - The resource kind.
+ * @param action - What to do with the resolved document.
+ * @param pattern - The name pattern.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+async function resolvePattern(
+  kind: 'template' | 'policy',
+  action: 'apply' | 'show',
+  pattern: string,
+  deps: SessionDeps,
+): Promise<void> {
+  const connection = deps.connection;
+  if (connection === undefined) {
+    return;
+  }
+  try {
+    const names = (await listNames(kind, connection)).filter((name) =>
+      matchesPattern(name, pattern),
+    );
+    const [first] = names;
+    if (first === undefined) {
+      pushLine(deps, `No ${kind} matches "${pattern}".`, 'yellow');
+      return;
+    }
+    if (names.length === 1) {
+      if (action === 'show') {
+        await showDocument(kind, first, deps);
+      } else {
+        await openDocument(kind, first, false, deps);
+      }
+      return;
+    }
+    deps.setEditPick({ kind, names, action });
+    deps.navigate('/edit/pick');
+  } catch (error) {
+    pushFailure(deps, describeFailure(error));
   }
 }
 
@@ -158,10 +182,7 @@ async function openPicker(
     return;
   }
   try {
-    const names =
-      kind === 'template'
-        ? (await listTemplates(connection)).map((template) => template.name)
-        : (await listPolicies(connection)).map((policy) => policy.name);
+    const names = await listNames(kind, connection);
     if (action === 'show' && names.length === 0) {
       pushLine(
         deps,
@@ -175,6 +196,23 @@ async function openPicker(
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
+}
+
+/**
+ * Lists the document names of the kind.
+ *
+ * @param kind - The resource kind.
+ * @param connection - The live connection.
+ * @returns The names, sorted.
+ */
+async function listNames(
+  kind: 'template' | 'policy',
+  connection: Connection,
+): Promise<string[]> {
+  if (kind === 'template') {
+    return (await listTemplates(connection)).map((template) => template.name);
+  }
+  return (await listPolicies(connection)).map((policy) => policy.name);
 }
 
 /**
@@ -252,7 +290,7 @@ async function openDocument(
  * @param connection - The live connection.
  * @returns The document, or undefined when it does not exist.
  */
-async function currentDocument(
+export async function currentDocument(
   kind: 'template' | 'policy',
   name: string,
   connection: Connection,
@@ -276,8 +314,16 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
     return;
   }
   try {
-    const reference = aliasReferenceLines(await listAliases(connection));
-    runEditor({ kind: 'alias', body: editSkeleton('alias'), reference }, deps);
+    const aliases = await listAliases(connection);
+    runEditor(
+      {
+        kind: 'alias',
+        body: editSkeleton('alias'),
+        reference: aliasReferenceLines(aliases),
+        snapshot: JSON.stringify(aliases, null, 2),
+      },
+      deps,
+    );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
@@ -337,107 +383,4 @@ function abortLine(
     };
   }
   return undefined;
-}
-
-/**
- * Builds the preview of a parsed edit.
- *
- * @param target - What the editor run worked on.
- * @param payload - The parsed payload.
- * @returns The preview: a diff for existing documents, an action summary for
- * aliases, the plain body otherwise.
- */
-function buildPreview(target: EditTarget, payload: unknown): EditPreviewState {
-  const pretty = JSON.stringify(payload, null, 2);
-  return {
-    kind: target.kind,
-    name: target.name,
-    payload,
-    title: TITLES[target.kind](target.name ?? ''),
-    lines: previewLines(target, pretty, payload),
-  };
-}
-
-/** The confirmation title per kind. */
-const TITLES: Record<EditKind, (name: string) => string> = {
-  template: (name) => `Save template "${name}"?`,
-  policy: (name) => `Save policy "${name}"?`,
-  alias: () => 'Apply these alias actions?',
-  index: (name) => `Create index "${name}"?`,
-};
-
-/**
- * Renders the preview lines of a parsed edit.
- *
- * @param target - What the editor run worked on.
- * @param pretty - The payload, pretty printed.
- * @param payload - The parsed payload.
- * @returns The preview lines.
- */
-function previewLines(
-  target: EditTarget,
-  pretty: string,
-  payload: unknown,
-): DiffLine[] {
-  if (target.kind === 'alias') {
-    return aliasActionLines(payload);
-  }
-  if (target.base !== undefined) {
-    const diff = diffLines(target.base, pretty);
-    return diff.length === 0 ? [{ sign: ' ', text: '(no changes)' }] : diff;
-  }
-  const sign = target.kind === 'index' ? ' ' : '+';
-  return pretty.split('\n').map((text) => ({ sign, text }));
-}
-
-/**
- * Applies the confirmed edit and reports the outcome.
- *
- * @param preview - The confirmed edit.
- * @param deps - The session state setters and the navigation.
- * @returns Nothing.
- */
-async function finish(
-  preview: EditPreviewState,
-  deps: SessionDeps,
-): Promise<void> {
-  const connection = deps.connection;
-  if (connection === undefined) {
-    return;
-  }
-  try {
-    pushLine(deps, await applyEdit(preview, connection), 'green');
-  } catch (error) {
-    pushFailure(deps, describeFailure(error));
-  }
-}
-
-/**
- * Applies one edit to the cluster.
- *
- * @param preview - The confirmed edit.
- * @param connection - The live connection.
- * @returns The confirmation line.
- */
-async function applyEdit(
-  preview: EditPreviewState,
-  connection: Connection,
-): Promise<string> {
-  const name = preview.name ?? '';
-  switch (preview.kind) {
-    case 'template':
-      await applyTemplate(connection, name, preview.payload);
-      return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
-    case 'policy': {
-      const outcome = await applyPolicy(connection, name, preview.payload);
-      return `✔ Policy "${name}" ${outcome}.`;
-    }
-    case 'alias': {
-      const count = await applyAliases(connection, preview.payload);
-      return `✔ Applied ${count} alias action${count === 1 ? '' : 's'}.`;
-    }
-    case 'index':
-      await createIndex(connection, name, preview.payload);
-      return `✔ Index "${name}" created.`;
-  }
 }
