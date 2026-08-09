@@ -26,8 +26,8 @@ typing; the slash form is the official one.
 | Command                  | Description                                                                                                                                            | Backing API                           |
 |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
 | `/template ls [pattern]` | List index templates                                                                                                                                   | `GET /_index_template`                |
-| `/template show [name]`  | Print a template, from a picker when no name is given                                                                                                  | `GET /_index_template/{name}`         |
-| `/template apply [name]` | Edit the named template (or pick one, or start a new one), confirm a line diff, then save. Reminds that existing indices are unaffected until rollover | `GET` + `PUT /_index_template/{name}` |
+| `/template show [name]`  | Print a template, from a picker when the name does not settle it                                                                                       | `GET /_index_template/{name}`         |
+| `/template apply [name]` | Edit a template (picked, or new, when the name does not settle it), confirm a line diff, then save. Reminds that existing indices are unaffected until rollover | `GET` + `PUT /_index_template/{name}` |
 | `/template rm <name>`    | Delete a template after confirmation                                                                                                                   | `DELETE /_index_template/{name}`      |
 
 ## policy (ISM)
@@ -35,8 +35,8 @@ typing; the slash form is the official one.
 | Command                     | Description                                                                                                                              | Backing API                                  |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
 | `/policy ls [pattern]`      | List ISM policies                                                                                                                        | `GET /_plugins/_ism/policies`                |
-| `/policy show [name]`       | Print a policy, from a picker when no name is given                                                                                      | `GET /_plugins/_ism/policies/{name}`         |
-| `/policy apply [name]`      | Edit the named policy (or pick one, or start a new one), confirm a line diff, then save. Resolves `seq_no` and `primary_term` internally | `GET` + `PUT /_plugins/_ism/policies/{name}` |
+| `/policy show [name]`       | Print a policy, from a picker when the name does not settle it                                                                           | `GET /_plugins/_ism/policies/{name}`         |
+| `/policy apply [name]`      | Edit a policy (picked, or new, when the name does not settle it), confirm a line diff, then save. Resolves `seq_no` and `primary_term` internally | `GET` + `PUT /_plugins/_ism/policies/{name}` |
 | `/policy rm <name>`         | Delete a policy after confirmation                                                                                                       | `DELETE /_plugins/_ism/policies/{name}`      |
 | `/policy explain [pattern]` | Show ISM state per index: current state, age, next transition, failed actions                                                            | `GET /_plugins/_ism/explain/{index}`         |
 
@@ -45,6 +45,32 @@ typing; the slash form is the official one.
 | Command         | Description                                    | Backing API                                                   |
 |-----------------|------------------------------------------------|---------------------------------------------------------------|
 | `/cluster info` | Show the health, active blocks, and disk usage | `_cluster/health`, `_cluster/state/blocks`, `_cat/allocation` |
+
+## backup
+
+| Command                | Description                                                                 |
+|------------------------|------------------------------------------------------------------------------|
+| `/backup ls [pattern]` | List this profile's backups with type, name, and save time                  |
+| `/backup show [name]`  | Print a backup, from a picker when the name does not settle it              |
+| `/backup apply [name]` | Restore a backup: confirm a line diff against the live document, then save  |
+| `/backup rm [pattern]` | Delete backups from a selection after confirmation                          |
+
+## Backups
+
+Every apply that overwrites an existing document saves the previous version to disk
+before sending the change. `/template apply` and `/policy apply` save the edited
+document, `/alias apply` saves a snapshot of the current alias table. Creating a new
+document writes no backup.
+
+- Backups are per profile and live under
+  `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`. They hold only the
+  document body, never passwords.
+- The last 20 versions per document are kept. Older ones are deleted on save.
+- A failed backup write aborts the apply.
+- `/backup apply` covers templates and policies and runs through the same
+  diff-and-confirm flow as any apply, so a restore backs up the document it replaces.
+  Alias snapshots are reference only: restore them by hand with `/backup show` and
+  `/alias apply`.
 
 ## session
 
@@ -92,6 +118,9 @@ does. The editor is `$VISUAL`, then `$EDITOR`, then `vi`.
 - `/template apply <name>` and `/policy apply <name>` open the named document directly.
   Without a name a picker lists the existing documents: one opens prefilled, `new` asks for
   a name and opens a minimal skeleton.
+- A name containing `*` is matched against the existing names, for `apply` and `show`
+  alike. A single match opens directly, several open the picker over the matches, none
+  aborts with a message. A pattern never creates a document, so backups keep real names.
 - Quitting without saving, saving without a change, or saving an empty file aborts. Invalid
   JSON aborts and names the temporary file, so the edit is not lost.
 - Before anything is sent, a confirmation shows a line diff for existing documents, the action

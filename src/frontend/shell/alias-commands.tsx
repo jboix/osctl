@@ -7,8 +7,9 @@ import {
   describeFailure,
   listAliases,
 } from '../../engine/engine';
+import { matchesPattern } from '../../utils/pattern';
 import type { CommandContext } from './command-types';
-import { matchesPattern, requireConnection } from './command-utils';
+import { requireConnection } from './command-utils';
 import { pushFailure, pushLine } from './output';
 
 /**

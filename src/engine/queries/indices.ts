@@ -1,5 +1,6 @@
 // The index listing query.
 
+import { formatBytes } from '../../utils/format';
 import type { Connection } from '../connection/connection';
 
 /** One index row of /index ls. */
@@ -73,25 +74,6 @@ export async function listIndices(
     creationDate: row['creation.date.string'],
     aliases: byIndex.get(row.index) ?? [],
   }));
-}
-
-const UNITS = ['b', 'kb', 'mb', 'gb', 'tb', 'pb'];
-
-/**
- * Formats a byte count as a human readable size.
- *
- * @param bytes - The byte count.
- * @returns The size with its unit, for example `1.2 mb`.
- */
-export function formatBytes(bytes: number): string {
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < UNITS.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  const rounded = unit === 0 ? String(value) : value.toFixed(1);
-  return `${rounded} ${UNITS[unit]}`;
 }
 
 /**

@@ -20,6 +20,7 @@ import type { ProfileAnswers } from '../screens/profile-add-machine';
 
 import type {
   AddProfileState,
+  BackupPickState,
   CopyPayload,
   EditPickState,
   EditPreviewState,
@@ -35,6 +36,7 @@ import type {
 
 export type { OutputItem, Session };
 
+import { createBackupActions } from './backup-actions';
 import { createEditActions } from './edit-actions';
 import { pushFailure, pushLine } from './output';
 import { createRemoveActions } from './remove-actions';
@@ -146,6 +148,7 @@ function useScreenState(): ScreenState {
   const [addState, setAddProfileState] = useState<AddProfileState>();
   const [removeState, setRemoveState] = useState<RemoveState | undefined>();
   const [editPick, setEditPick] = useState<EditPickState | undefined>();
+  const [backupPick, setBackupPick] = useState<BackupPickState | undefined>();
   const [editPreview, setEditPreview] = useState<
     EditPreviewState | undefined
   >();
@@ -158,6 +161,8 @@ function useScreenState(): ScreenState {
     setRemoveState,
     editPick,
     setEditPick,
+    backupPick,
+    setBackupPick,
     editPreview,
     setEditPreview,
   };
@@ -295,6 +300,7 @@ function createActions(deps: SessionDeps): SessionActions {
     },
     ...createRemoveActions(deps),
     ...createEditActions(deps),
+    ...createBackupActions(deps),
   };
 }
 

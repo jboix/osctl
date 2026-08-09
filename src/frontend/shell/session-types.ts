@@ -3,6 +3,8 @@
 import type { ReactNode } from 'react';
 import type {
   AliasInfo,
+  BackupInfo,
+  BackupType,
   Connection,
   IndexInfo,
   Profile,
@@ -65,6 +67,23 @@ export interface EditPreviewState {
   title: string;
   /** The preview lines: a diff, a summary, or the plain body. */
   lines: DiffLine[];
+  /** The backup written before the apply, when it overwrites something. */
+  backup?: {
+    /** The resource kind. */
+    type: BackupType;
+    /** The document name; `aliases` for alias table snapshots. */
+    name: string;
+    /** The body being overwritten. */
+    body: string;
+  };
+}
+
+/** The backup picker: choose a backup to show or restore. */
+export interface BackupPickState {
+  /** What picking a backup does. */
+  action: 'show' | 'apply';
+  /** The pickable backups, newest first. */
+  entries: BackupInfo[];
 }
 
 /** A removal awaiting selection and confirmation. */
@@ -75,7 +94,8 @@ export type RemoveState =
       kind: 'template' | 'policy';
       items: { label: string; value: string }[];
     }
-  | { kind: 'profile'; items: { label: string; value: string }[] };
+  | { kind: 'profile'; items: { label: string; value: string }[] }
+  | { kind: 'backup'; items: { label: string; value: string }[] };
 
 /** The actions the shell can trigger. */
 export interface SessionActions {
@@ -111,6 +131,16 @@ export interface SessionActions {
   cancelPassword: () => void;
   /** Connects to the given profile, asking for its password when needed. */
   switchProfile: (profile: Profile) => void;
+  /** Shows a backup as the document block. */
+  showBackup: (backup: BackupInfo) => void;
+  /** Opens the restore preview of a backup. */
+  applyBackup: (backup: BackupInfo) => void;
+  /** Opens the backup picker over the given entries. */
+  openBackupPick: (action: 'show' | 'apply', entries: BackupInfo[]) => void;
+  /** Acts on the picked backup with the action of the open picker. */
+  pickBackup: (id: string) => void;
+  /** Closes the backup picker. */
+  cancelBackupPick: () => void;
 }
 
 /** The session state values and their setters. */
@@ -139,6 +169,10 @@ export interface SessionState {
   editPick?: EditPickState;
   /** Stores the picker state. */
   setEditPick: (state: EditPickState | undefined) => void;
+  /** The picker the /backup/pick screen renders. */
+  backupPick?: BackupPickState;
+  /** Stores the backup picker state. */
+  setBackupPick: (state: BackupPickState | undefined) => void;
   /** The edit the /edit/preview screen confirms. */
   editPreview?: EditPreviewState;
   /** Stores the edit awaiting confirmation. */

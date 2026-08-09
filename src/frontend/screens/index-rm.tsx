@@ -2,7 +2,8 @@
 
 import { Box, Text } from 'ink';
 import type { ReactElement, ReactNode } from 'react';
-import { formatBytes, type IndexInfo } from '../../engine/engine';
+import type { IndexInfo } from '../../engine/engine';
+import { formatBytes } from '../../utils/format';
 import { RemoveScreen } from './remove';
 
 /** The screen contract. */
