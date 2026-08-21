@@ -1,5 +1,6 @@
 // The /backup flows: show a backup, open the restore preview, run the picker.
 
+import { type DiffLine, diffLines } from 'inkstand';
 import {
   type BackupInfo,
   BackupStore,
@@ -7,7 +8,6 @@ import {
   describeFailure,
 } from '../../engine/engine';
 import { readableStamp } from '../../utils/time';
-import { type DiffLine, diffLines } from '../components/line-diff';
 import { currentDocument } from './edit-actions';
 import { pushFailure, pushLine } from './output';
 import type {

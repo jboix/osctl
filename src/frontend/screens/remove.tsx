@@ -1,10 +1,9 @@
 // The removal skeleton: select the rows, review the plan, confirm.
 
 import { Box, Text, useInput } from 'ink';
-import SelectInput from 'ink-select-input';
+import { MultiSelect, Select } from 'inkstand';
 import type { ReactElement, ReactNode } from 'react';
 import { useState } from 'react';
-import { MultiSelect } from '../components/multi-select';
 
 /** The removal screen contract. */
 export interface RemoveScreenProps {
@@ -68,13 +67,13 @@ function Confirm(
   return (
     <Box flexDirection="column">
       {props.confirmation(props.chosen)}
-      <SelectInput
+      <Select
         items={[
           { label: 'no', value: false },
           { label: 'yes, delete', value: true },
         ]}
-        onSelect={(item) =>
-          item.value ? props.onConfirm(props.chosen) : props.onCancel()
+        onSelect={(confirmed) =>
+          confirmed ? props.onConfirm(props.chosen) : props.onCancel()
         }
       />
     </Box>

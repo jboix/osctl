@@ -1,5 +1,7 @@
 // The session contracts: state, actions, and their dependencies.
 
+import type { SuspendTerminal } from 'ink';
+import type { DiffLine, LineEditor } from 'inkstand';
 import type { ReactNode } from 'react';
 import type {
   AliasInfo,
@@ -9,8 +11,6 @@ import type {
   IndexInfo,
   Profile,
 } from '../../engine/engine';
-import type { DiffLine } from '../components/line-diff';
-import type { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
 import type { EditKind } from './edit-content';
@@ -219,6 +219,6 @@ export interface SessionDeps extends SessionState {
   showDoc: (title: string, text: string) => void;
   /** Moves the input area to another screen. */
   navigate: (to: string) => void;
-  /** Switches the terminal raw mode, for handing the tty to an editor. */
-  setRawMode: (raw: boolean) => void;
+  /** Hands the terminal to an external editor and restores Ink after. */
+  suspend: SuspendTerminal;
 }

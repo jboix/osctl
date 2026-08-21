@@ -1,18 +1,16 @@
 // The command input: the line editor, the suggestions, and the router.
 
 import { Box, type Key, Text, useApp, useInput } from 'ink';
+import {
+  type CommandInfo,
+  CommandList,
+  type LineEditor,
+  Prompt,
+} from 'inkstand';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { LineEditorView } from '../components/line-editor';
-import type { LineEditor } from '../components/line-editor-machine';
-import {
-  type Command,
-  type CommandContext,
-  NAME_WIDTH,
-  route,
-  suggest,
-} from './commands';
+import { type Command, type CommandContext, route, suggest } from './commands';
 import type { Session } from './session';
 
 /**
@@ -26,22 +24,66 @@ export function CommandInput(props: { session: Session }): ReactElement {
   const { exit } = useApp();
   const navigate = useNavigate();
   const { editor, setEditor } = props.session;
-  const suggestions = useSuggestions(editor.value);
+  const [focused, setFocused] = useState(false);
+  const hits = suggest(editor.value);
+  const listFocused = focused && hits.length > 0;
   useInput((input, key) =>
     handleKeystroke(input, key, {
       context: { session: props.session, exit, navigate },
       editor,
       setEditor,
-      suggestions,
+      focused: listFocused,
+      setFocused,
+      hits,
     }),
   );
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" paddingX={1}>
-        <Text color="cyan">{'> '}</Text>
-        <LineEditorView cursor={editor.cursor} value={editor.value} />
+      <Prompt cursor={editor.cursor} value={editor.value} />
+      {hits.length > 0 && (listFocused || editor.value !== '') && (
+        <Suggestions
+          focused={listFocused}
+          hits={hits}
+          onBlur={() => setFocused(false)}
+          onPick={(command) => setEditor(editor.withValue(`${command.name} `))}
+        />
+      )}
+    </Box>
+  );
+}
+
+/**
+ * Renders the suggestion list with its key hint.
+ *
+ * @param props - The component props.
+ * @param props.hits - The commands matching the current input.
+ * @param props.focused - Whether the list has the focus.
+ * @param props.onPick - Called with the picked command.
+ * @param props.onBlur - Called when a keystroke leaves the list.
+ * @returns The suggestion area element.
+ */
+function Suggestions(props: {
+  hits: Command[];
+  focused: boolean;
+  onPick: (command: CommandInfo) => void;
+  onBlur: () => void;
+}): ReactElement {
+  return (
+    <Box flexDirection="column">
+      <CommandList
+        commands={props.hits}
+        dim
+        focused={props.focused}
+        onBlur={props.onBlur}
+        onPick={props.onPick}
+      />
+      <Box paddingX={1}>
+        <Text dimColor italic>
+          {props.focused
+            ? 'up and down move, enter picks, tab returns to the input'
+            : 'tab selects a command'}
+        </Text>
       </Box>
-      <SuggestionList {...suggestions} />
     </Box>
   );
 }
@@ -54,18 +96,22 @@ interface KeystrokeDeps {
   editor: LineEditor;
   /** Replaces the editor state. */
   setEditor: (editor: LineEditor) => void;
-  /** The suggestion list state. */
-  suggestions: Suggestions;
+  /** Whether the suggestion list has the focus. */
+  focused: boolean;
+  /** Sets the focus flag. */
+  setFocused: (focused: boolean) => void;
+  /** The commands matching the current input. */
+  hits: Command[];
 }
 
 /**
  * Applies one keystroke: ctrl+o folds or expands the shown documents, tab
- * moves the focus, a focused list consumes its keys, everything else goes to
- * the editor.
+ * moves the focus into the suggestion list, and the rest goes to the editor.
+ * The focused list reads its own keys through `CommandList`.
  *
  * @param input - The printable characters of the keystroke.
  * @param key - The special-key flags.
- * @param deps - The editor, the suggestions, and the command context.
+ * @param deps - The editor, the focus flag, and the command context.
  * @returns Nothing.
  */
 function handleKeystroke(input: string, key: Key, deps: KeystrokeDeps): void {
@@ -74,53 +120,18 @@ function handleKeystroke(input: string, key: Key, deps: KeystrokeDeps): void {
     return;
   }
   if (key.tab) {
-    deps.suggestions.toggle();
+    if (!deps.focused) {
+      deps.setFocused(deps.hits.length > 0);
+    }
     return;
   }
-  if (deps.suggestions.focused && listConsumes(key, deps)) {
+  if (
+    deps.focused &&
+    (key.upArrow || key.downArrow || key.return || key.escape)
+  ) {
     return;
   }
   applyEditorKey(input, key, deps);
-}
-
-/**
- * Handles a keystroke while the list has the focus.
- *
- * @param key - The special-key flags.
- * @param deps - The editor, the suggestions, and the command context.
- * @returns Whether the list consumed the keystroke.
- */
-function listConsumes(key: Key, deps: KeystrokeDeps): boolean {
-  if (key.upArrow || key.downArrow) {
-    deps.suggestions.move(key.upArrow ? -1 : 1);
-    return true;
-  }
-  if (key.escape) {
-    deps.suggestions.blur();
-    return true;
-  }
-  if (key.return) {
-    completeHighlighted(deps);
-    return true;
-  }
-  deps.suggestions.blur();
-  return false;
-}
-
-/**
- * Writes the highlighted command into the input, without submitting it,
- * because many commands take further arguments.
- *
- * @param deps - The editor, the suggestions, and the command context.
- * @returns Nothing.
- */
-function completeHighlighted(deps: KeystrokeDeps): void {
-  const name = deps.suggestions.items[deps.suggestions.highlight]?.name;
-  if (name === undefined) {
-    return;
-  }
-  deps.suggestions.blur();
-  deps.setEditor(deps.editor.withValue(`${name} `));
 }
 
 /**
@@ -128,7 +139,7 @@ function completeHighlighted(deps: KeystrokeDeps): void {
  *
  * @param input - The printable characters of the keystroke.
  * @param key - The special-key flags.
- * @param deps - The editor, the suggestions, and the command context.
+ * @param deps - The editor, the focus flag, and the command context.
  * @returns Nothing.
  */
 function applyEditorKey(input: string, key: Key, deps: KeystrokeDeps): void {
@@ -163,83 +174,4 @@ function runLine(line: string, context: CommandContext): void {
     'keep',
   );
   route(line, context);
-}
-
-/** The suggestion list state and its actions. */
-interface Suggestions {
-  /** The commands matching the current input. */
-  items: Command[];
-  /** The index of the highlighted item. */
-  highlight: number;
-  /** Whether the list has the focus. */
-  focused: boolean;
-  /** Whether the list is shown. */
-  visible: boolean;
-  /** Moves the focus between the input and the list. */
-  toggle: () => void;
-  /** Returns the focus to the input. */
-  blur: () => void;
-  /** Moves the highlight by the given delta, wrapping around. */
-  move: (delta: number) => void;
-}
-
-/**
- * Tracks the suggestions for the current input. The list is a passive hint
- * while the input has the focus; tab moves the focus into it.
- *
- * @param value - The current input value.
- * @returns The suggestion list state and its actions.
- */
-function useSuggestions(value: string): Suggestions {
-  const [focused, setFocused] = useState(false);
-  const [highlight, setHighlight] = useState(0);
-  const items = suggest(value);
-  const clamped = Math.min(highlight, Math.max(items.length - 1, 0));
-  return {
-    items,
-    highlight: clamped,
-    focused: focused && items.length > 0,
-    visible: items.length > 0 && (focused || value !== ''),
-    toggle: (): void => {
-      setHighlight(0);
-      setFocused(items.length > 0 && !focused);
-    },
-    blur: (): void => setFocused(false),
-    move: (delta: number): void =>
-      setHighlight((clamped + delta + items.length) % items.length),
-  };
-}
-
-/**
- * Renders the suggestions under the input box. The highlight marker appears
- * only while the list has the focus.
- *
- * @param props - The suggestion list state.
- * @returns The list element, or null while hidden.
- */
-function SuggestionList(props: Suggestions): ReactElement | null {
-  if (!props.visible) {
-    return null;
-  }
-  return (
-    <Box flexDirection="column" paddingX={1}>
-      {props.items.map((command, index) => (
-        <Text
-          color={
-            props.focused && index === props.highlight ? 'cyan' : undefined
-          }
-          dimColor={!props.focused || index !== props.highlight}
-          key={command.name}
-        >
-          {props.focused && index === props.highlight ? '❯ ' : '  '}
-          {command.name.slice(1).padEnd(NAME_WIDTH)} {command.description}
-        </Text>
-      ))}
-      <Text dimColor italic>
-        {props.focused
-          ? 'up and down move, enter picks, tab returns to the input'
-          : 'tab selects a command'}
-      </Text>
-    </Box>
-  );
 }

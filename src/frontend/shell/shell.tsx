@@ -1,14 +1,14 @@
 // The shell frame: scrollback above, routed input area, status bar below.
 
-import { Box, Static, useStdout } from 'ink';
+import { Box } from 'ink';
+import { Scrollback, useResizeRedraw } from 'inkstand';
 import type { ReactElement } from 'react';
-import { useEffect } from 'react';
 import packageJson from '../../../package.json';
 import { DocFoldContext } from '../components/doc-block';
 import { Header } from '../components/header';
 import { StatusBar } from '../components/status-bar';
 import { ScreenRoutes } from './screen-routes';
-import { type OutputItem, useSession } from './session';
+import { useSession } from './session';
 
 /**
  * Renders the shell.
@@ -21,13 +21,7 @@ export function Shell(): ReactElement {
   return (
     <DocFoldContext.Provider value={session.docsExpanded}>
       <Box flexDirection="column" paddingX={1}>
-        <Static items={session.outputs} key={session.generation}>
-          {(item: OutputItem) => (
-            <Box key={item.id} paddingX={1}>
-              {item.node}
-            </Box>
-          )}
-        </Static>
+        <Scrollback generation={session.generation} items={session.outputs} />
         <Box flexDirection="column" marginTop={1}>
           <ScreenRoutes session={session} />
           <StatusBar
@@ -42,22 +36,4 @@ export function Shell(): ReactElement {
       </Box>
     </DocFoldContext.Provider>
   );
-}
-
-/**
- * Redraws everything when the terminal is resized: the stale frame rewraps
- * and breaks the layout, so the viewport is cleared and the scrollback is
- * re-rendered at the new width.
- *
- * @param redraw - Clears the terminal and repaints everything.
- * @returns Nothing.
- */
-function useResizeRedraw(redraw: () => void): void {
-  const { stdout } = useStdout();
-  useEffect(() => {
-    stdout.on('resize', redraw);
-    return () => {
-      stdout.off('resize', redraw);
-    };
-  }, [stdout, redraw]);
 }

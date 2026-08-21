@@ -1,5 +1,6 @@
 // Builds the preview of an edit and applies it after confirmation.
 
+import { type DiffLine, diffLines } from 'inkstand';
 import {
   applyAliases,
   applyPolicy,
@@ -9,7 +10,6 @@ import {
   createIndex,
   describeFailure,
 } from '../../engine/engine';
-import { type DiffLine, diffLines } from '../components/line-diff';
 import { aliasActionLines, type EditKind } from './edit-content';
 import { pushFailure, pushLine } from './output';
 import type { EditPreviewState, SessionDeps } from './session-types';

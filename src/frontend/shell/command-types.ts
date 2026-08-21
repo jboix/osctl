@@ -1,5 +1,6 @@
 // The command contracts.
 
+import type { Command as ToolkitCommand } from 'inkstand';
 import type { Session } from './session';
 
 /** What a command can act on. */
@@ -13,11 +14,4 @@ export interface CommandContext {
 }
 
 /** One osctl command. */
-export interface Command {
-  /** The official name, with the leading slash. */
-  name: string;
-  /** One line shown by /help and the suggestions. */
-  description: string;
-  /** Runs the command. */
-  run: (context: CommandContext, args: string[]) => void;
-}
+export type Command = ToolkitCommand<CommandContext>;

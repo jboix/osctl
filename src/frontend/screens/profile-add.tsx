@@ -1,8 +1,7 @@
 // The /profile add wizard UI: renders the machine's questions.
 
 import { Box, Text, useInput } from 'ink';
-import SelectInput from 'ink-select-input';
-import TextInput from 'ink-text-input';
+import { Select, TextPrompt } from 'inkstand';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import {
@@ -58,6 +57,7 @@ export function ProfileAddWizard(props: ProfileAddWizardProps): ReactElement {
       <QuestionView
         key={machine.step}
         onAnswer={answer}
+        onCancel={props.onCancel}
         question={machine.question}
       />
     </Box>
@@ -70,24 +70,26 @@ export function ProfileAddWizard(props: ProfileAddWizardProps): ReactElement {
  * @param props - The component props.
  * @param props.question - The question to render.
  * @param props.onAnswer - Called with the answer.
+ * @param props.onCancel - Called when the user cancels.
  * @returns The question element.
  */
 function QuestionView(props: {
   question: Question;
   onAnswer: (value: string | boolean) => void;
+  onCancel: () => void;
 }): ReactElement {
   if (props.question.kind === 'select') {
     return (
       <Box flexDirection="column">
         <Text>{props.question.label}</Text>
-        <SelectInput
+        <Select
           items={props.question.items ?? []}
-          onSelect={(item) => props.onAnswer(item.value)}
+          onSelect={(value) => props.onAnswer(value)}
         />
       </Box>
     );
   }
-  return <TextQuestion onAnswer={props.onAnswer} question={props.question} />;
+  return <TextQuestion {...props} />;
 }
 
 /**
@@ -96,13 +98,14 @@ function QuestionView(props: {
  * @param props - The component props.
  * @param props.question - The question to render.
  * @param props.onAnswer - Called with the entered text.
+ * @param props.onCancel - Called when the user cancels.
  * @returns The question element.
  */
 function TextQuestion(props: {
   question: Question;
   onAnswer: (value: string) => void;
+  onCancel: () => void;
 }): ReactElement {
-  const [value, setValue] = useState('');
   const submit = (raw: string): void => {
     const trimmed = raw.trim();
     const final = trimmed === '' ? (props.question.fallback ?? '') : trimmed;
@@ -111,20 +114,23 @@ function TextQuestion(props: {
     }
   };
   return (
-    <Box>
-      <Text>
-        {props.question.label}
-        {props.question.fallback !== undefined
-          ? ` [${props.question.fallback}]`
-          : ''}
-        {': '}
-      </Text>
-      <TextInput
-        mask={props.question.mask === true ? '•' : undefined}
-        onChange={setValue}
-        onSubmit={submit}
-        value={value}
-      />
-    </Box>
+    <TextPrompt
+      label={label(props.question)}
+      mask={props.question.mask === true ? '•' : undefined}
+      onCancel={props.onCancel}
+      onSubmit={submit}
+    />
   );
+}
+
+/**
+ * Builds the question label, with the fallback in brackets.
+ *
+ * @param question - The question to label.
+ * @returns The label text.
+ */
+function label(question: Question): string {
+  return question.fallback === undefined
+    ? question.label
+    : `${question.label} [${question.fallback}]`;
 }

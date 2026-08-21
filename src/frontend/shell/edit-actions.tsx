@@ -1,5 +1,6 @@
 // The editor flow: pick a document, edit it in $EDITOR, preview, apply.
 
+import { type EditorResult, editText } from 'inkstand';
 import {
   type Connection,
   describeFailure,
@@ -16,7 +17,6 @@ import {
   editSkeleton,
 } from './edit-content';
 import { buildPreview, type EditTarget, finish } from './edit-preview';
-import { type EditorResult, editText } from './editor';
 import { type JsoncResult, parseJsonc } from './jsonc';
 import { pushFailure, pushLine } from './output';
 import type { SessionActions, SessionDeps } from './session-types';
@@ -48,7 +48,10 @@ export function createEditActions(deps: SessionDeps): EditActions {
       void openAliasEditor(deps);
     },
     startIndexEdit: (name): void => {
-      runEditor({ kind: 'index', name, body: editSkeleton('index') }, deps);
+      void runEditor(
+        { kind: 'index', name, body: editSkeleton('index') },
+        deps,
+      );
     },
     cancelEdit: (): void => close(deps),
     confirmEdit: (): void => {
@@ -275,7 +278,10 @@ async function openDocument(
     }
     const base =
       current === undefined ? undefined : JSON.stringify(current, null, 2);
-    runEditor({ kind, name, body: base ?? editSkeleton(kind), base }, deps);
+    void runEditor(
+      { kind, name, body: base ?? editSkeleton(kind), base },
+      deps,
+    );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
     close(deps);
@@ -315,7 +321,7 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
   }
   try {
     const aliases = await listAliases(connection);
-    runEditor(
+    void runEditor(
       {
         kind: 'alias',
         body: editSkeleton('alias'),
@@ -336,12 +342,18 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
  * @param deps - The session state setters and the navigation.
  * @returns Nothing.
  */
-function runEditor(target: EditTarget, deps: SessionDeps): void {
-  const result = editText(
-    [target.kind, target.name].filter(Boolean).join('-'),
-    editHeaderLines(target.kind, target.name, target.reference),
-    target.body,
-    { setRawMode: deps.setRawMode, redraw: deps.redraw },
+async function runEditor(target: EditTarget, deps: SessionDeps): Promise<void> {
+  const result = await editText(
+    {
+      prefix: 'osctl',
+      slug: [target.kind, target.name].filter(Boolean).join('-'),
+      body: target.body,
+      header: editHeaderLines(target.kind, target.name, target.reference)
+        .map((line) => `// ${line}`)
+        .join('\n'),
+      extension: 'jsonc',
+    },
+    { suspend: deps.suspend, redraw: deps.redraw },
   );
   const parsed = parseJsonc(result.text);
   const abort = abortLine(result, parsed);

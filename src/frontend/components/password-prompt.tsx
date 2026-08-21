@@ -1,9 +1,8 @@
 // The masked password prompt shown when a profile requires basic auth.
 
-import { Box, Text, useInput } from 'ink';
-import TextInput from 'ink-text-input';
+import { Box, Text } from 'ink';
+import { TextPrompt } from 'inkstand';
 import type { ReactElement } from 'react';
-import { useState } from 'react';
 
 /** The password prompt contract. */
 export interface PasswordPromptProps {
@@ -24,12 +23,6 @@ export interface PasswordPromptProps {
  * @returns The prompt element.
  */
 export function PasswordPrompt(props: PasswordPromptProps): ReactElement {
-  const [value, setValue] = useState('');
-  useInput((input, key) => {
-    if (key.escape || (key.ctrl && input === 'c')) {
-      props.onCancel();
-    }
-  });
   return (
     <Box
       borderColor="yellow"
@@ -40,15 +33,12 @@ export function PasswordPrompt(props: PasswordPromptProps): ReactElement {
       <Text>
         Password for {props.username} @ {props.host} (esc or ctrl+c to cancel)
       </Text>
-      <Box>
-        <Text color="cyan">{'> '}</Text>
-        <TextInput
-          mask="•"
-          onChange={setValue}
-          onSubmit={props.onSubmit}
-          value={value}
-        />
-      </Box>
+      <TextPrompt
+        label="Password"
+        mask="•"
+        onCancel={props.onCancel}
+        onSubmit={props.onSubmit}
+      />
     </Box>
   );
 }

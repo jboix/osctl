@@ -1,6 +1,7 @@
 // The command registry and the router. /help and the suggestions render from it.
 
 import { Box, Text } from 'ink';
+import { createRouter } from 'inkstand';
 import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
 import { ProfileStore } from '../../engine/engine';
@@ -197,8 +198,11 @@ const COMMANDS: Command[] = [
   },
 ];
 
+/** The pure router over the command list. */
+const ROUTER = createRouter(COMMANDS);
+
 /** The width the command names are padded to in lists. */
-export const NAME_WIDTH = 17;
+const NAME_WIDTH = 17;
 
 /**
  * Returns the commands matching a partially typed line. The leading `/` is
@@ -208,8 +212,7 @@ export const NAME_WIDTH = 17;
  * @returns The matching commands.
  */
 export function suggest(input: string): Command[] {
-  const bare = input.startsWith('/') ? input.slice(1) : input;
-  return COMMANDS.filter((command) => command.name.slice(1).startsWith(bare));
+  return ROUTER.suggest(input);
 }
 
 /**
@@ -220,13 +223,8 @@ export function suggest(input: string): Command[] {
  * @returns Nothing.
  */
 export function route(line: string, context: CommandContext): void {
-  const normalized = line.startsWith('/') ? line : `/${line}`;
-  const command = COMMANDS.find(
-    (candidate) =>
-      normalized === candidate.name ||
-      normalized.startsWith(`${candidate.name} `),
-  );
-  if (command === undefined) {
+  const hit = ROUTER.match(line);
+  if (hit === undefined) {
     pushLine(
       context.session,
       `Unknown command "${line}". Type /help.`,
@@ -234,8 +232,7 @@ export function route(line: string, context: CommandContext): void {
     );
     return;
   }
-  const rest = normalized.slice(command.name.length).trim();
-  command.run(context, rest === '' ? [] : rest.split(/\s+/));
+  void hit.command.run(context, hit.args);
 }
 
 /**
