@@ -15,6 +15,7 @@ jobs:
 
     permissions:
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -50,9 +51,9 @@ jobs:
         run: |
           bun run typecheck
 
-      - name: Run unit tests
+      - name: Run unit tests with coverage
         run: |
-          bun run test
+          bun run test:coverage
 
       - name: Build the binary
         run: |
@@ -61,6 +62,11 @@ jobs:
       - name: Run the compiled binary
         run: |
           ./dist/osctl
+
+      - name: Test coverage
+        uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
+        with:
+          config: .github/octocov.yml
 
   commitlint:
     if: github.event_name == 'pull_request'
