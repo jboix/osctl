@@ -1,7 +1,7 @@
 // The /copy command runner.
 
 import { Text } from 'ink';
-import { copyToClipboard } from './clipboard';
+import { copyToClipboard } from 'inkstand';
 import type { CommandContext } from './command-types';
 import { pushLine } from './output';
 

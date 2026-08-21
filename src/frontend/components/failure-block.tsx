@@ -1,6 +1,6 @@
 // A failed request: the lead message and the raw response under it.
 
-import { Box, Text } from 'ink';
+import { Notice, noticeText } from 'inkstand';
 import type { ReactElement } from 'react';
 
 /**
@@ -16,10 +16,7 @@ export function FailureBlock(props: {
   details?: string;
 }): ReactElement {
   return (
-    <Box flexDirection="column">
-      <Text color="red">✖ {props.message}</Text>
-      {props.details !== undefined && <Text dimColor>{props.details}</Text>}
-    </Box>
+    <Notice details={props.details} message={props.message} tone="error" />
   );
 }
 
@@ -35,6 +32,5 @@ export function failureText(props: {
   message: string;
   details?: string;
 }): string {
-  const lead = `✖ ${props.message}`;
-  return props.details === undefined ? lead : `${lead}\n${props.details}`;
+  return noticeText({ ...props, tone: 'error' });
 }

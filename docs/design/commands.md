@@ -6,9 +6,9 @@ typing; the slash form is the official one.
 
 ## index
 
-| Command                              | Description                                                                                                                                                            | Backing API                                 |
-|--------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
-| `/index ls [pattern]`                | List indices with health, doc count, size, creation date, and attached aliases                                                                                         | `_cat/indices`, `_cat/aliases`              |
+| Command                              | Description                                                                                                                                       | Backing API                                 |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| `/index ls [pattern]`                | List indices with health, doc count, size, creation date, and attached aliases                                                                    | `_cat/indices`, `_cat/aliases`              |
 | `/index rm [pattern]`                | Delete indices. Opens a multi-select list of the matching indices. Confirms with index count and total size. Warns when a write index is selected | `DELETE /{index}`                           |
 | `/index create <name> [write-alias]` | Create an index. Without the alias shorthand, the body opens in the editor                                                                        | `PUT /{index}`                              |
 | `/index rollover <alias>`            | Roll over the write alias, then reapply the aliases the new head is missing                                                                       | `POST /{alias}/_rollover`, `POST /_aliases` |
@@ -23,22 +23,22 @@ typing; the slash form is the official one.
 
 ## template
 
-| Command                  | Description                                                                                                                                            | Backing API                           |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| `/template ls [pattern]` | List index templates                                                                                                                                   | `GET /_index_template`                |
-| `/template show [name]`  | Print a template, from a picker when the name does not settle it                                                                                       | `GET /_index_template/{name}`         |
+| Command                  | Description                                                                                                                                                     | Backing API                           |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| `/template ls [pattern]` | List index templates                                                                                                                                            | `GET /_index_template`                |
+| `/template show [name]`  | Print a template, from a picker when the name does not settle it                                                                                                | `GET /_index_template/{name}`         |
 | `/template apply [name]` | Edit a template (picked, or new, when the name does not settle it), confirm a line diff, then save. Reminds that existing indices are unaffected until rollover | `GET` + `PUT /_index_template/{name}` |
-| `/template rm <name>`    | Delete a template after confirmation                                                                                                                   | `DELETE /_index_template/{name}`      |
+| `/template rm <name>`    | Delete a template after confirmation                                                                                                                            | `DELETE /_index_template/{name}`      |
 
 ## policy (ISM)
 
-| Command                     | Description                                                                                                                              | Backing API                                  |
-|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `/policy ls [pattern]`      | List ISM policies                                                                                                                        | `GET /_plugins/_ism/policies`                |
-| `/policy show [name]`       | Print a policy, from a picker when the name does not settle it                                                                           | `GET /_plugins/_ism/policies/{name}`         |
+| Command                     | Description                                                                                                                                       | Backing API                                  |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| `/policy ls [pattern]`      | List ISM policies                                                                                                                                 | `GET /_plugins/_ism/policies`                |
+| `/policy show [name]`       | Print a policy, from a picker when the name does not settle it                                                                                    | `GET /_plugins/_ism/policies/{name}`         |
 | `/policy apply [name]`      | Edit a policy (picked, or new, when the name does not settle it), confirm a line diff, then save. Resolves `seq_no` and `primary_term` internally | `GET` + `PUT /_plugins/_ism/policies/{name}` |
-| `/policy rm <name>`         | Delete a policy after confirmation                                                                                                       | `DELETE /_plugins/_ism/policies/{name}`      |
-| `/policy explain [pattern]` | Show ISM state per index: current state, age, next transition, failed actions                                                            | `GET /_plugins/_ism/explain/{index}`         |
+| `/policy rm <name>`         | Delete a policy after confirmation                                                                                                                | `DELETE /_plugins/_ism/policies/{name}`      |
+| `/policy explain [pattern]` | Show ISM state per index: current state, age, next transition, failed actions                                                                     | `GET /_plugins/_ism/explain/{index}`         |
 
 ## cluster
 
@@ -48,12 +48,12 @@ typing; the slash form is the official one.
 
 ## backup
 
-| Command                | Description                                                                 |
-|------------------------|------------------------------------------------------------------------------|
-| `/backup ls [pattern]` | List this profile's backups with type, name, and save time                  |
-| `/backup show [name]`  | Print a backup, from a picker when the name does not settle it              |
-| `/backup apply [name]` | Restore a backup: confirm a line diff against the live document, then save  |
-| `/backup rm [pattern]` | Delete backups from a selection after confirmation                          |
+| Command                | Description                                                                |
+|------------------------|----------------------------------------------------------------------------|
+| `/backup ls [pattern]` | List this profile's backups with type, name, and save time                 |
+| `/backup show [name]`  | Print a backup, from a picker when the name does not settle it             |
+| `/backup apply [name]` | Restore a backup: confirm a line diff against the live document, then save |
+| `/backup rm [pattern]` | Delete backups from a selection after confirmation                         |
 
 ## Backups
 

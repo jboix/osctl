@@ -1,6 +1,7 @@
 // Session state for the shell: startup, scrollback outputs, and the status line.
 
-import { useStdin, useStdout } from 'ink';
+import { useApp } from 'ink';
+import { LineEditor, useRedraw } from 'inkstand';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -14,7 +15,6 @@ import {
   ProfileStore,
 } from '../../engine/engine';
 import { DocBlock } from '../components/doc-block';
-import { LineEditor } from '../components/line-editor-machine';
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
 
@@ -34,7 +34,7 @@ import type {
   SessionState,
 } from './session-types';
 
-export type { OutputItem, Session };
+export type { Session };
 
 import { createBackupActions } from './backup-actions';
 import { createEditActions } from './edit-actions';
@@ -49,7 +49,7 @@ import { createRemoveActions } from './remove-actions';
  */
 export function useSession(header: ReactNode): Session {
   const navigate = useNavigate();
-  const { setRawMode } = useStdin();
+  const { suspendTerminal } = useApp();
   const scrollback = useScrollback(header);
   const state = useSessionState();
   const fold = useDocFold(scrollback.hasDocs, state.redraw);
@@ -58,7 +58,7 @@ export function useSession(header: ReactNode): Session {
     push: scrollback.push,
     showDoc: scrollback.showDoc,
     navigate,
-    setRawMode,
+    suspend: suspendTerminal,
   };
   useStartup(deps);
   useStatusRefresh(state.connection, state.setStatus);
@@ -105,24 +105,6 @@ function useSessionState(): SessionState {
     ...useRedraw(),
     ...useScreenState(),
   };
-}
-
-/**
- * Owns the scrollback generation. Bumping it after a clear repaints the
- * scrollback at the current width, after a resize or an external editor.
- * The cursor is re-hidden: an external editor shows it on exit and Ink
- * would leave it blinking under the frame.
- *
- * @returns The generation and the redraw function.
- */
-function useRedraw(): { generation: number; redraw: () => void } {
-  const { write } = useStdout();
-  const [generation, setGeneration] = useState(0);
-  const redraw = useCallback(() => {
-    write('\u001B[2J\u001B[H\u001B[?25l');
-    setGeneration((current) => current + 1);
-  }, [write]);
-  return { generation, redraw };
 }
 
 /** The screen related part of the session state. */

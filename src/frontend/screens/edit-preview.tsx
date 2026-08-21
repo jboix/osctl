@@ -1,9 +1,8 @@
 // The edit preview: shows the pending change and asks for confirmation.
 
 import { Box, Text, useInput } from 'ink';
-import SelectInput from 'ink-select-input';
+import { type DiffLine, DiffView, Select } from 'inkstand';
 import type { ReactElement } from 'react';
-import type { DiffLine } from '../components/line-diff';
 
 /** The edit preview contract. */
 export interface EditPreviewProps {
@@ -15,30 +14,6 @@ export interface EditPreviewProps {
   onConfirm: () => void;
   /** Called when the user cancels. */
   onCancel: () => void;
-}
-
-/** The color per diff sign. */
-const COLORS = {
-  '+': 'green',
-  '-': 'red',
-  '@': 'cyan',
-  ' ': undefined,
-} as const;
-
-/**
- * Gives every line a stable key: its content plus its occurrence count.
- *
- * @param lines - The preview lines.
- * @returns The lines with their keys.
- */
-function keyedLines(lines: DiffLine[]): (DiffLine & { key: string })[] {
-  const seen = new Map<string, number>();
-  return lines.map((line) => {
-    const base = `${line.sign}${line.text}`;
-    const count = seen.get(base) ?? 0;
-    seen.set(base, count + 1);
-    return { ...line, key: `${base}#${count}` };
-  });
 }
 
 /**
@@ -62,19 +37,15 @@ export function EditPreview(props: EditPreviewProps): ReactElement {
     >
       <Text color="cyan">{props.title} (esc, q, or ctrl+c to cancel)</Text>
       <Box flexDirection="column" marginBottom={1}>
-        {keyedLines(props.lines).map((line) => (
-          <Text color={COLORS[line.sign]} key={line.key}>
-            {line.sign} {line.text}
-          </Text>
-        ))}
+        <DiffView lines={props.lines} />
       </Box>
-      <SelectInput
+      <Select
         items={[
-          { label: 'No, cancel', value: 'no' },
-          { label: 'Yes, apply', value: 'yes' },
+          { label: 'No, cancel', value: false },
+          { label: 'Yes, apply', value: true },
         ]}
-        onSelect={(item) =>
-          item.value === 'yes' ? props.onConfirm() : props.onCancel()
+        onSelect={(confirmed) =>
+          confirmed ? props.onConfirm() : props.onCancel()
         }
       />
     </Box>

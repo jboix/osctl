@@ -1,7 +1,7 @@
 // The editor flow content: skeletons, file headers, and alias summaries.
 
+import type { DiffLine } from 'inkstand';
 import type { AliasInfo } from '../../engine/engine';
-import type { DiffLine } from '../components/line-diff';
 
 /** The resource kinds the editor flow handles. */
 export const EDIT_KINDS = ['template', 'policy', 'alias', 'index'] as const;

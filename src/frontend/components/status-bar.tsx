@@ -1,6 +1,7 @@
 // The status bar under the input box.
 
-import { Box, Text } from 'ink';
+import { Text } from 'ink';
+import { StatusBar as StatusBarView, type StatusSegment } from 'inkstand';
 import type { ReactElement } from 'react';
 
 /** The values the status bar displays. */
@@ -34,21 +35,38 @@ const DEFAULT_STATUS_COLOR = 'gray';
  * @returns The status bar element.
  */
 export function StatusBar(props: StatusBarProps): ReactElement {
-  const color = STATUS_COLORS[props.status ?? ''] ?? DEFAULT_STATUS_COLOR;
   return (
-    <Box gap={2} justifyContent="space-between" paddingX={1}>
-      <Box gap={1}>
-        <Text>[{props.profileName ?? 'no profile'}]</Text>
-        <Text color={color}>●</Text>
-        {props.status !== undefined && <Text>{props.status}</Text>}
-        {props.clusterName !== undefined && <Text>{props.clusterName}</Text>}
-        {props.host !== undefined && <Text dimColor>{props.host}</Text>}
-      </Box>
-      {props.hint !== undefined && (
-        <Box flexShrink={0}>
+    <StatusBarView
+      right={
+        props.hint === undefined ? undefined : (
           <Text dimColor>{props.hint}</Text>
-        </Box>
-      )}
-    </Box>
+        )
+      }
+      segments={segments(props)}
+    />
   );
+}
+
+/**
+ * Builds the left segments from the status values.
+ *
+ * @param props - The status values.
+ * @returns The segments, in display order.
+ */
+function segments(props: StatusBarProps): StatusSegment[] {
+  const color = STATUS_COLORS[props.status ?? ''] ?? DEFAULT_STATUS_COLOR;
+  const items: StatusSegment[] = [
+    { text: `[${props.profileName ?? 'no profile'}]` },
+    { text: '●', color },
+  ];
+  if (props.status !== undefined) {
+    items.push({ text: props.status });
+  }
+  if (props.clusterName !== undefined) {
+    items.push({ text: props.clusterName });
+  }
+  if (props.host !== undefined) {
+    items.push({ text: props.host, dim: true });
+  }
+  return items;
 }
