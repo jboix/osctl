@@ -38,6 +38,7 @@
     "knip": "knip",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "build": "bun build src/index.tsx --compile --outfile dist/osctl",
     "build:npm": "bun build src/index.tsx --target=node --banner '#!/usr/bin/env node' --outfile dist/index.js",
     "build:all": "bun run scripts/build.ts",
