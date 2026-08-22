@@ -1,6 +1,7 @@
 // The engine facade: the only engine module the frontend imports.
 
 export { applyAliases } from './commands/apply-aliases';
+export { applyClusterSettings } from './commands/cluster-settings';
 export { createIndex } from './commands/create-index';
 export { deleteAlias } from './commands/delete-alias';
 export { deleteIndices } from './commands/delete-indices';
@@ -18,8 +19,19 @@ export type { FailureReport } from './connection/failure';
 export { describeFailure } from './connection/failure';
 export type { AliasInfo } from './queries/aliases';
 export { listAliases } from './queries/aliases';
-export type { ClusterInfo } from './queries/cluster';
-export { clusterInfo } from './queries/cluster';
+export type {
+  AllocationExplanation,
+  ClusterInfo,
+  ClusterSettings,
+  NodeDecision,
+  NodeInfo,
+} from './queries/cluster';
+export {
+  clusterInfo,
+  clusterSettings,
+  explainAllocation,
+  listNodes,
+} from './queries/cluster';
 export type { Health } from './queries/health';
 export { health } from './queries/health';
 export type { IndexInfo } from './queries/indices';

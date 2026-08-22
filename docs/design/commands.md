@@ -42,9 +42,13 @@ typing; the slash form is the official one.
 
 ## cluster
 
-| Command         | Description                                    | Backing API                                                   |
-|-----------------|------------------------------------------------|---------------------------------------------------------------|
-| `/cluster info` | Show the health, active blocks, and disk usage | `_cluster/health`, `_cluster/state/blocks`, `_cat/allocation` |
+| Command                   | Description                                                                                 | Backing API                                                   |
+|---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| `/cluster info`           | Show the health, active blocks, and disk usage                                              | `_cluster/health`, `_cluster/state/blocks`, `_cat/allocation` |
+| `/cluster settings`       | Show the persistent and transient cluster settings, with flat keys                          | `GET /_cluster/settings`                                      |
+| `/cluster settings apply` | Edit the cluster settings in the editor, confirm a line diff, then save                     | `GET` + `PUT /_cluster/settings`                              |
+| `/cluster nodes`          | List the nodes with roles, version, heap, CPU, and load. Marks the cluster manager with `*` | `_cat/nodes`                                                  |
+| `/cluster explain`        | Explain why the first unassigned shard is unassigned, with the per node deciders            | `GET /_cluster/allocation/explain`                            |
 
 ## backup
 
@@ -57,22 +61,14 @@ typing; the slash form is the official one.
 
 ## Backups
 
-Every apply that overwrites an existing document saves the previous version to disk
-before sending the change. `/template apply` and `/policy apply` save the edited
-document, `/alias apply` saves a snapshot of the current alias table. Creating a new
-document writes no backup.
+Every change that overwrites existing documents is backed up, that includes: `/template apply`, 
+`/policy apply`, `/alias apply` and `/cluster settings apply`.
 
-- Backups are per profile and live under
-  `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`. They hold only the
-  document body, never passwords.
+- Backups are stored per profile under 
+  `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`.
 - The last 20 versions per document are kept. Older ones are deleted on save.
-- A failed backup write aborts the apply.
-- `/backup apply` covers templates and policies and runs through the same
-  diff-and-confirm flow as any apply, so a restore backs up the document it replaces.
-  Alias snapshots are reference only: restore them by hand with `/backup show` and
-  `/alias apply`.
 
-## session
+## profile
 
 | Command                   | Description                                                  |
 |---------------------------|--------------------------------------------------------------|
@@ -80,51 +76,12 @@ document writes no backup.
 | `/profile ls`             | List the profiles as a select; picking one switches to it    |
 | `/profile default [name]` | Set the default profile, interactively when no name is given |
 | `/profile rm [pattern]`   | Delete profiles from a selection                             |
+
+## others
+
+| Command                   | Description                                                  |
+|---------------------------|--------------------------------------------------------------|
 | `/copy`                   | Copy the last command output to the clipboard                |
 | `/help`                   | Show the available commands                                  |
 | `/version`                | Print the osctl version                                      |
 | `/exit`                   | Quit osctl                                                   |
-
-## Shown documents
-
-`/template show` and `/policy show` render the document as a block with a summary line
-naming the document and its line count.
-
-- Documents longer than 10 lines render folded: the first 10 lines, then a marker with
-  the hidden line count.
-- Ctrl+o folds or expands every shown document at once, including those in the
-  scrollback, by repainting it.
-- While there is something to copy, the right edge of the status bar shows the hint
-  `/copy copies the last output`.
-
-## /copy
-
-`/copy` copies the last command output as plain text: the JSON of a shown document, the
-rendered text of a table or tree, the text of a failure report or message.
-
-- A shown document is copied in full, folded or not.
-- The copy uses the platform tool: `pbcopy` on macOS, `wl-copy`, `xclip`, or `clip.exe`
-  (WSL) on Linux, `clip` on Windows. Without a working tool it falls back to the OSC 52
-  escape sequence, which most terminals apply.
-
-## The editor
-
-Commands that take JSON (`/alias apply`, `/template apply`, `/policy apply`, and
-`/index create` without the alias shorthand) open the configured editor, like `git commit`
-does. The editor is `$VISUAL`, then `$EDITOR`, then `vi`.
-
-- The file is JSONC: a comment header carries the instructions, the documentation link, and,
-  for aliases, the existing alias names. Full comment lines are stripped before parsing.
-- `/template apply <name>` and `/policy apply <name>` open the named document directly.
-  Without a name a picker lists the existing documents: one opens prefilled, `new` asks for
-  a name and opens a minimal skeleton.
-- A name containing `*` is matched against the existing names, for `apply` and `show`
-  alike. A single match opens directly, several open the picker over the matches, none
-  aborts with a message. A pattern never creates a document, so backups keep real names.
-- Quitting without saving, saving without a change, or saving an empty file aborts. Invalid
-  JSON aborts and names the temporary file, so the edit is not lost.
-- Before anything is sent, a confirmation shows a line diff for existing documents, the action
-  summary for aliases, and the plain body for new documents and indices. The diff shows only
-  the changed hunks, with line numbers and three context lines, like git. OpenSearch has no
-  dry run for these APIs; the alias summary restates the actions, it does not predict the
-  cluster outcome.

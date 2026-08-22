@@ -96,6 +96,13 @@ describe('BackupStore', () => {
     expect(store.list().filter((b) => b.name === 'other')).toHaveLength(1);
   });
 
+  test('saves and lists cluster settings backups', () => {
+    const store = new BackupStore('prod', root);
+    const info = store.save('cluster', 'settings', '{}');
+    expect(info.id).toBe(`cluster/settings-${info.stamp}`);
+    expect(store.list().map((b) => b.type)).toEqual(['cluster']);
+  });
+
   test('removes a backup and reports a missing one', () => {
     const store = new BackupStore('prod', root);
     const info = store.save('alias', 'aliases', '[]');

@@ -3,6 +3,7 @@
 import { type DiffLine, diffLines } from 'inkstand';
 import {
   applyAliases,
+  applyClusterSettings,
   applyPolicy,
   applyTemplate,
   BackupStore,
@@ -64,6 +65,9 @@ function previewBackup(target: EditTarget): EditPreviewState['backup'] {
   if (target.kind === 'alias' && target.snapshot !== undefined) {
     return { type: 'alias', name: 'aliases', body: target.snapshot };
   }
+  if (target.kind === 'cluster' && target.base !== undefined) {
+    return { type: 'cluster', name: 'settings', body: target.base };
+  }
   if (
     (target.kind === 'template' || target.kind === 'policy') &&
     target.base !== undefined &&
@@ -80,6 +84,7 @@ const TITLES: Record<EditKind, (name: string) => string> = {
   policy: (name) => `Save policy "${name}"?`,
   alias: () => 'Apply these alias actions?',
   index: (name) => `Create index "${name}"?`,
+  cluster: () => 'Apply these cluster settings?',
 };
 
 /**
@@ -189,5 +194,8 @@ async function applyEdit(
     case 'index':
       await createIndex(connection, name, preview.payload);
       return `✔ Index "${name}" created.`;
+    case 'cluster':
+      await applyClusterSettings(connection, preview.payload);
+      return '✔ Cluster settings applied.';
   }
 }
