@@ -4,7 +4,13 @@ import type { DiffLine } from 'inkstand';
 import type { AliasInfo } from '../../engine/engine';
 
 /** The resource kinds the editor flow handles. */
-export const EDIT_KINDS = ['template', 'policy', 'alias', 'index'] as const;
+export const EDIT_KINDS = [
+  'template',
+  'policy',
+  'alias',
+  'index',
+  'cluster',
+] as const;
 
 /** One resource kind of the editor flow. */
 export type EditKind = (typeof EDIT_KINDS)[number];
@@ -16,6 +22,17 @@ const DOCS: Record<EditKind, string> = {
   alias: 'https://docs.opensearch.org/latest/im-plugin/index-alias/',
   index:
     'https://docs.opensearch.org/latest/api-reference/index-apis/create-index/',
+  cluster:
+    'https://docs.opensearch.org/latest/api-reference/cluster-api/cluster-settings/',
+};
+
+/** What the file header calls the edited resource. */
+const NOUNS: Record<EditKind, string> = {
+  template: 'template',
+  policy: 'policy',
+  alias: 'alias actions',
+  index: 'index',
+  cluster: 'cluster settings',
 };
 
 /** The minimal valid body per kind, shown when creating a new document. */
@@ -34,6 +51,7 @@ const SKELETONS: Record<EditKind, unknown> = {
   },
   alias: { actions: [] },
   index: { settings: {}, mappings: {}, aliases: {} },
+  cluster: { persistent: {}, transient: {} },
 };
 
 /**
@@ -59,7 +77,7 @@ export function editHeaderLines(
   name?: string,
   extra: string[] = [],
 ): string[] {
-  const target = name === undefined ? kind : `${kind} "${name}"`;
+  const target = name === undefined ? NOUNS[kind] : `${NOUNS[kind]} "${name}"`;
   return [
     `osctl: edit the ${target}.`,
     `Format: ${DOCS[kind]}`,

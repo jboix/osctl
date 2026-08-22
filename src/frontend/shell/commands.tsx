@@ -13,7 +13,12 @@ import {
   runBackupRm,
   runBackupShow,
 } from './backup-commands';
-import { runClusterInfo } from './cluster-commands';
+import {
+  runClusterExplain,
+  runClusterInfo,
+  runClusterNodes,
+  runClusterSettings,
+} from './cluster-commands';
 import type { Command, CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
 import { runCopy } from './copy-command';
@@ -131,6 +136,30 @@ const COMMANDS: Command[] = [
     run: (context) => void runClusterInfo(context),
   },
   {
+    name: '/cluster settings',
+    description: 'Show the persistent and transient cluster settings',
+    run: (context) => void runClusterSettings(context),
+  },
+  {
+    name: '/cluster settings apply',
+    description: 'Edit the cluster settings in your editor',
+    run: (context) => {
+      if (requireConnection(context) !== undefined) {
+        context.session.startClusterSettingsEdit();
+      }
+    },
+  },
+  {
+    name: '/cluster nodes',
+    description: 'List the nodes with roles, version, heap, and load',
+    run: (context) => void runClusterNodes(context),
+  },
+  {
+    name: '/cluster explain',
+    description: 'Explain why a shard is unassigned',
+    run: (context) => void runClusterExplain(context),
+  },
+  {
     name: '/backup ls',
     description: 'List the backups of this profile: /backup ls [pattern]',
     run: (context, args) => runBackupLs(context, args[0]),
@@ -202,7 +231,7 @@ const COMMANDS: Command[] = [
 const ROUTER = createRouter(COMMANDS);
 
 /** The width the command names are padded to in lists. */
-const NAME_WIDTH = 17;
+const NAME_WIDTH = 24;
 
 /**
  * Returns the commands matching a partially typed line. The leading `/` is

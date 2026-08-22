@@ -127,6 +127,14 @@ function showBackup(backup: BackupInfo, deps: SessionDeps): void {
   );
 }
 
+/** The hint per backup type that cannot be restored directly. */
+const REFERENCE_ONLY: Record<'alias' | 'cluster', string> = {
+  alias:
+    'Alias snapshots are reference only. Use /backup show and /alias apply.',
+  cluster:
+    'Cluster settings backups are reference only. Use /backup show and /cluster settings apply.',
+};
+
 /**
  * Opens the restore preview: the backup body diffed against the live
  * document. Confirming applies through the standard edit flow, which backs
@@ -145,12 +153,8 @@ async function applyBackup(
     pushLine(deps, 'Not connected. Run /profile add.', 'yellow');
     return;
   }
-  if (backup.type === 'alias') {
-    pushLine(
-      deps,
-      'Alias snapshots are reference only. Use /backup show and /alias apply.',
-      'yellow',
-    );
+  if (backup.type === 'alias' || backup.type === 'cluster') {
+    pushLine(deps, REFERENCE_ONLY[backup.type], 'yellow');
     return;
   }
   const body = backupStore(deps)?.read(backup.id);

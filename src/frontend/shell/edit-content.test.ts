@@ -24,6 +24,11 @@ test('editHeaderLines appends the extra reference lines', () => {
   expect(lines.at(-1)).toBe('Current aliases:');
 });
 
+test('editHeaderLines names the cluster settings without a name', () => {
+  const lines = editHeaderLines('cluster');
+  expect(lines[0]).toBe('osctl: edit the cluster settings.');
+});
+
 test('aliasActionLines describes add and remove actions', () => {
   const lines = aliasActionLines({
     actions: [

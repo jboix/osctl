@@ -3,6 +3,7 @@
 import { type EditorResult, editText } from 'inkstand';
 import {
   type Connection,
+  clusterSettings,
   describeFailure,
   getPolicy,
   getTemplate,
@@ -28,6 +29,7 @@ type EditActions = Pick<
   | 'startShow'
   | 'pickEditTarget'
   | 'startAliasEdit'
+  | 'startClusterSettingsEdit'
   | 'startIndexEdit'
   | 'cancelEdit'
   | 'confirmEdit'
@@ -46,6 +48,9 @@ export function createEditActions(deps: SessionDeps): EditActions {
     pickEditTarget: (name, isNew): void => dispatchPick(name, isNew, deps),
     startAliasEdit: (): void => {
       void openAliasEditor(deps);
+    },
+    startClusterSettingsEdit: (): void => {
+      void openClusterSettingsEditor(deps);
     },
     startIndexEdit: (name): void => {
       void runEditor(
@@ -327,6 +332,36 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
         body: editSkeleton('alias'),
         reference: aliasReferenceLines(aliases),
         snapshot: JSON.stringify(aliases, null, 2),
+      },
+      deps,
+    );
+  } catch (error) {
+    pushFailure(deps, describeFailure(error));
+  }
+}
+
+/**
+ * Opens the editor over the current cluster settings.
+ *
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+async function openClusterSettingsEditor(deps: SessionDeps): Promise<void> {
+  const connection = deps.connection;
+  if (connection === undefined) {
+    return;
+  }
+  try {
+    const settings = await clusterSettings(connection);
+    const base = JSON.stringify(settings, null, 2);
+    void runEditor(
+      {
+        kind: 'cluster',
+        body: base,
+        base,
+        reference: [
+          'Removing a line does not unset a setting: set it to null to unset it.',
+        ],
       },
       deps,
     );

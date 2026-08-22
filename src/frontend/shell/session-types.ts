@@ -107,6 +107,8 @@ export interface SessionActions {
   pickEditTarget: (name: string, isNew: boolean) => void;
   /** Opens the editor over an alias actions skeleton. */
   startAliasEdit: () => void;
+  /** Opens the editor over the current cluster settings. */
+  startClusterSettingsEdit: () => void;
   /** Opens the editor over the body of a new index. */
   startIndexEdit: (name: string) => void;
   /** Closes the editor flow without applying. */

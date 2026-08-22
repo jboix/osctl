@@ -97,7 +97,9 @@ export function runBackupApply(context: CommandContext, name?: string): void {
   const backups = store
     .list()
     .filter(
-      (backup) => backup.type !== 'alias' && matchesPattern(backup.name, name),
+      (backup) =>
+        (backup.type === 'template' || backup.type === 'policy') &&
+        matchesPattern(backup.name, name),
     );
   act(context, backups, 'apply');
 }
