@@ -59,6 +59,7 @@ osctl
 | `/policy`   | `ls`, `show`, `apply`, `rm`, `explain`                                 |
 | `/cluster`  | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
 | `/task`     | `ls`, `show`, `cancel`                                                 |
+| `/snapshot` | `repo ls`, `ls`, `show`, `create`, `restore`, `rm`                     |
 | `/backup`   | `ls`, `show`, `apply`, `rm`                                            |
 | `/profile`  | `add`, `ls`, `default`, `rm`                                           |
 

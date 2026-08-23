@@ -7,6 +7,7 @@ import {
   deleteComponent,
   deleteIndices,
   deletePolicy,
+  deleteSnapshot,
   deleteTemplate,
   describeFailure,
   ProfileStore,
@@ -72,7 +73,36 @@ function dispatchRemove(
     void cancelTasks(names, deps.connection, deps);
     return;
   }
+  if (state.kind === 'snapshot') {
+    void removeSnapshots(state.repo, names, deps.connection, deps);
+    return;
+  }
   void finishRemove(state, names, deps.connection, deps);
+}
+
+/**
+ * Deletes the confirmed snapshots one by one, reporting each outcome.
+ *
+ * @param repo - The repository holding the snapshots.
+ * @param names - The confirmed snapshot names.
+ * @param connection - The live connection.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+async function removeSnapshots(
+  repo: string,
+  names: string[],
+  connection: Connection,
+  deps: SessionDeps,
+): Promise<void> {
+  for (const name of names) {
+    try {
+      await deleteSnapshot(connection, repo, name);
+      pushLine(deps, `✔ Snapshot "${repo}/${name}" deleted.`, 'green');
+    } catch (error) {
+      pushFailure(deps, describeFailure(error));
+    }
+  }
 }
 
 /**
@@ -148,7 +178,10 @@ function removeBackups(ids: string[], deps: SessionDeps): void {
  * @returns Nothing.
  */
 async function finishRemove(
-  state: Exclude<RemoveState, { kind: 'profile' | 'backup' | 'task' }>,
+  state: Exclude<
+    RemoveState,
+    { kind: 'profile' | 'backup' | 'task' | 'snapshot' }
+  >,
   names: string[],
   connection: Connection,
   deps: SessionDeps,

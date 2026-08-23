@@ -4,8 +4,6 @@ import { Box, Text } from 'ink';
 import { createRouter } from 'inkstand';
 import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
-import { ProfileStore } from '../../engine/engine';
-import { matchesPattern } from '../../utils/pattern';
 import { runAliasLs, runAliasRm } from './alias-commands';
 import {
   runBackupApply,
@@ -45,6 +43,15 @@ import {
   runPolicyRm,
   runPolicyShow,
 } from './policy-commands';
+import { runProfileDefault, runProfileRm } from './profile-commands';
+import {
+  runSnapshotCreate,
+  runSnapshotLs,
+  runSnapshotRepoLs,
+  runSnapshotRestore,
+  runSnapshotRm,
+  runSnapshotShow,
+} from './snapshot-commands';
 import { runTaskCancel, runTaskLs, runTaskShow } from './task-commands';
 import {
   runTemplateApply,
@@ -220,6 +227,36 @@ const COMMANDS: Command[] = [
     run: (context, args) => void runTaskCancel(context, args[0]),
   },
   {
+    name: '/snapshot repo ls',
+    description: 'List the snapshot repositories',
+    run: (context) => void runSnapshotRepoLs(context),
+  },
+  {
+    name: '/snapshot ls',
+    description: 'List the snapshots: /snapshot ls [repo]',
+    run: (context, args) => void runSnapshotLs(context, args[0]),
+  },
+  {
+    name: '/snapshot show',
+    description: 'Print a snapshot: /snapshot show <repo> <name>',
+    run: (context, args) => void runSnapshotShow(context, args[0], args[1]),
+  },
+  {
+    name: '/snapshot create',
+    description: 'Take a snapshot: /snapshot create <repo> <name>',
+    run: (context, args) => runSnapshotCreate(context, args[0], args[1]),
+  },
+  {
+    name: '/snapshot restore',
+    description: 'Restore a snapshot: /snapshot restore <repo> <name>',
+    run: (context, args) => runSnapshotRestore(context, args[0], args[1]),
+  },
+  {
+    name: '/snapshot rm',
+    description: 'Delete snapshots from a selection: /snapshot rm <repo>',
+    run: (context, args) => void runSnapshotRm(context, args[0], args[1]),
+  },
+  {
     name: '/backup ls',
     description: 'List the backups of this profile: /backup ls [pattern]',
     run: (context, args) => runBackupLs(context, args[0]),
@@ -322,55 +359,6 @@ export function route(line: string, context: CommandContext): void {
     return;
   }
   void hit.command.run(context, hit.args);
-}
-
-/**
- * Sets the default profile, interactively when no name is given.
- *
- * @param context - What the command can act on.
- * @param args - The command arguments; the first one is the profile name.
- * @returns Nothing.
- */
-function runProfileDefault(context: CommandContext, args: string[]): void {
-  const name = args[0];
-  if (name === undefined) {
-    context.navigate('/profile/default');
-    return;
-  }
-  const profile = new ProfileStore().setDefault(name);
-  if (profile === undefined) {
-    pushLine(
-      context.session,
-      `No profile named "${name}". Run /profile ls.`,
-      'yellow',
-    );
-    return;
-  }
-  pushLine(context.session, `Default profile set to "${name}".`);
-}
-
-/**
- * Opens the deletion screen for the profiles matching the pattern.
- *
- * @param context - What the command can act on.
- * @param pattern - A profile name or pattern; all profiles when omitted.
- * @returns Nothing.
- */
-function runProfileRm(context: CommandContext, pattern?: string): void {
-  const profiles = new ProfileStore()
-    .load()
-    .profiles.filter((profile) => matchesPattern(profile.name, pattern));
-  if (profiles.length === 0) {
-    pushLine(context.session, 'No profiles match.', 'dim');
-    return;
-  }
-  context.session.startRemove({
-    kind: 'profile',
-    items: profiles.map((profile) => ({
-      label: `${profile.name.padEnd(16)} ${profile.host}`,
-      value: profile.name,
-    })),
-  });
 }
 
 /**

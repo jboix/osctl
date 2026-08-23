@@ -73,6 +73,19 @@ typing; the slash form is the official one.
 Tasks cannot be created directly: an operation started with `wait_for_completion=false`
 returns one.
 
+## snapshot
+
+| Command                           | Description                                                                    | Backing API                              |
+|-----------------------------------|--------------------------------------------------------------------------------|------------------------------------------|
+| `/snapshot repo ls`               | List the snapshot repositories                                                 | `GET /_snapshot`                         |
+| `/snapshot ls [repo]`             | List snapshots with state, index count, start time, duration, and failures     | `GET /_snapshot/{repo}/_all`             |
+| `/snapshot show <repo> <name>`    | Print a snapshot                                                               | `GET /_snapshot/{repo}/{name}`           |
+| `/snapshot create <repo> <name>`  | Edit the snapshot body in the editor, confirm, then start it in the background | `PUT /_snapshot/{repo}/{name}`           |
+| `/snapshot restore <repo> <name>` | Edit the restore body in the editor, confirm, then start it in the background  | `POST /_snapshot/{repo}/{name}/_restore` |
+| `/snapshot rm <repo> [pattern]`   | Delete snapshots from a selection after confirmation                           | `DELETE /_snapshot/{repo}/{name}`        |
+
+Snapshot clone, repository cleanup, and repository management are not covered.
+
 ## backup
 
 | Command                | Description                                                                |

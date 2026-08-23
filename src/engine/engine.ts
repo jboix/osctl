@@ -13,6 +13,11 @@ export { applyIndexSettings } from './commands/index-settings';
 export { applyPolicy, deletePolicy } from './commands/policies';
 export type { RolloverResult } from './commands/rollover';
 export { rollover } from './commands/rollover';
+export {
+  createSnapshot,
+  deleteSnapshot,
+  restoreSnapshot,
+} from './commands/snapshots';
 export { cancelTask } from './commands/tasks';
 export { applyTemplate, deleteTemplate } from './commands/templates';
 export type { BackupInfo, BackupType } from './config/backups';
@@ -50,6 +55,12 @@ export type {
   PolicyInfo,
 } from './queries/policies';
 export { explainIsm, getPolicy, listPolicies } from './queries/policies';
+export type { RepoInfo, SnapshotInfo } from './queries/snapshots';
+export {
+  getSnapshot,
+  listRepositories,
+  listSnapshots,
+} from './queries/snapshots';
 export type { TaskInfo } from './queries/tasks';
 export { getTask, listTasks } from './queries/tasks';
 export type { TemplateInfo } from './queries/templates';
