@@ -21,6 +21,12 @@ import {
 } from './cluster-commands';
 import type { Command, CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
+import {
+  runComponentApply,
+  runComponentLs,
+  runComponentRm,
+  runComponentShow,
+} from './component-commands';
 import { runCopy } from './copy-command';
 import {
   runIndexCreate,
@@ -122,6 +128,26 @@ const COMMANDS: Command[] = [
     name: '/template rm',
     description: 'Delete templates from a selection: /template rm [pattern]',
     run: (context, args) => void runTemplateRm(context, args[0]),
+  },
+  {
+    name: '/component ls',
+    description: 'List the component templates: /component ls [pattern]',
+    run: (context, args) => void runComponentLs(context, args[0]),
+  },
+  {
+    name: '/component show',
+    description: 'Print a component template, from a picker',
+    run: (context, args) => runComponentShow(context, args[0]),
+  },
+  {
+    name: '/component apply',
+    description: 'Edit a component template: /component apply [name]',
+    run: (context, args) => runComponentApply(context, args[0]),
+  },
+  {
+    name: '/component rm',
+    description: 'Delete component templates from a selection',
+    run: (context, args) => void runComponentRm(context, args[0]),
   },
   {
     name: '/policy ls',

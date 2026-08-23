@@ -33,6 +33,15 @@ typing; the slash form is the official one.
 | `/template apply [name]` | Edit a template (picked, or new, when the name does not settle it), confirm a line diff, then save. Reminds that existing indices are unaffected until rollover | `GET` + `PUT /_index_template/{name}` |
 | `/template rm <name>`    | Delete a template after confirmation                                                                                                                            | `DELETE /_index_template/{name}`      |
 
+## component
+
+| Command                   | Description                                                                                                   | Backing API                               |
+|---------------------------|---------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| `/component ls [pattern]` | List component templates                                                                                      | `GET /_component_template`                |
+| `/component show [name]`  | Print a component template, from a picker when the name does not settle it                                    | `GET /_component_template/{name}`         |
+| `/component apply [name]` | Edit a component template (picked, or new, when the name does not settle it), confirm a line diff, then save | `GET` + `PUT /_component_template/{name}` |
+| `/component rm [pattern]` | Delete component templates from a selection after confirmation                                                | `DELETE /_component_template/{name}`      |
+
 ## policy (ISM)
 
 | Command                     | Description                                                                                                                                       | Backing API                                  |
@@ -65,7 +74,8 @@ typing; the slash form is the official one.
 ## Backups
 
 Every change that overwrites existing documents is backed up, that includes: `/template apply`, 
-`/policy apply`, `/alias apply`, `/cluster settings apply` and `/index settings apply`.
+`/component apply`, `/policy apply`, `/alias apply`, `/cluster settings apply` and
+`/index settings apply`.
 
 - Backups are stored per profile under 
   `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`.

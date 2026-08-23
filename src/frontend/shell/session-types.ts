@@ -46,7 +46,12 @@ export interface AddProfileState {
 }
 
 /** The resource kinds the document picker lists. */
-export type PickKind = 'template' | 'policy' | 'index' | 'index-settings';
+export type PickKind =
+  | 'template'
+  | 'component'
+  | 'policy'
+  | 'index'
+  | 'index-settings';
 
 /** The picker of the editor flow: choose a document or start a new one. */
 export interface EditPickState {
@@ -94,7 +99,7 @@ export type RemoveState =
   | { kind: 'index'; targets: IndexInfo[] }
   | { kind: 'alias'; targets: AliasInfo[] }
   | {
-      kind: 'template' | 'policy';
+      kind: 'template' | 'component' | 'policy';
       items: { label: string; value: string }[];
     }
   | { kind: 'profile'; items: { label: string; value: string }[] }

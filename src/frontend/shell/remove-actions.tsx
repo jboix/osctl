@@ -3,6 +3,7 @@
 import {
   type Connection,
   deleteAlias,
+  deleteComponent,
   deleteIndices,
   deletePolicy,
   deleteTemplate,
@@ -134,7 +135,7 @@ async function finishRemove(
  * @returns Nothing.
  */
 async function removeEach(
-  kind: 'alias' | 'template' | 'policy',
+  kind: 'alias' | 'template' | 'component' | 'policy',
   names: string[],
   connection: Connection,
   deps: SessionDeps,
@@ -158,7 +159,7 @@ async function removeEach(
  * @returns The confirmation sentence.
  */
 async function removeOne(
-  kind: 'alias' | 'template' | 'policy',
+  kind: 'alias' | 'template' | 'component' | 'policy',
   name: string,
   connection: Connection,
 ): Promise<string> {
@@ -169,6 +170,10 @@ async function removeOne(
   if (kind === 'template') {
     await deleteTemplate(connection, name);
     return `Template "${name}" deleted.`;
+  }
+  if (kind === 'component') {
+    await deleteComponent(connection, name);
+    return `Component template "${name}" deleted.`;
   }
   await deletePolicy(connection, name);
   return `Policy "${name}" deleted.`;

@@ -6,6 +6,7 @@ import type { AliasInfo } from '../../engine/engine';
 /** The resource kinds the editor flow handles. */
 export const EDIT_KINDS = [
   'template',
+  'component',
   'policy',
   'alias',
   'index',
@@ -19,6 +20,7 @@ export type EditKind = (typeof EDIT_KINDS)[number];
 /** The format documentation per kind. */
 const DOCS: Record<EditKind, string> = {
   template: 'https://docs.opensearch.org/latest/im-plugin/index-templates/',
+  component: 'https://docs.opensearch.org/latest/im-plugin/index-templates/',
   policy: 'https://docs.opensearch.org/latest/im-plugin/ism/policies/',
   alias: 'https://docs.opensearch.org/latest/im-plugin/index-alias/',
   index:
@@ -32,6 +34,7 @@ const DOCS: Record<EditKind, string> = {
 /** What the file header calls the edited resource. */
 const NOUNS: Record<EditKind, string> = {
   template: 'template',
+  component: 'component template',
   policy: 'policy',
   alias: 'alias actions',
   index: 'index',
@@ -44,6 +47,9 @@ const SKELETONS: Record<EditKind, unknown> = {
   template: {
     index_patterns: ['logs-*'],
     priority: 1,
+    template: { settings: {}, mappings: {} },
+  },
+  component: {
     template: { settings: {}, mappings: {} },
   },
   policy: {

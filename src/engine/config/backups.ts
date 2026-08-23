@@ -15,6 +15,7 @@ import { compactStamp } from '../../utils/time';
 /** The resource kinds a backup can hold. */
 export type BackupType =
   | 'template'
+  | 'component'
   | 'policy'
   | 'alias'
   | 'cluster'
@@ -23,6 +24,7 @@ export type BackupType =
 /** The backup types, used to validate directory names. */
 const BACKUP_TYPES: BackupType[] = [
   'template',
+  'component',
   'policy',
   'alias',
   'cluster',
