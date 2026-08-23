@@ -13,6 +13,7 @@ export { applyIndexSettings } from './commands/index-settings';
 export { applyPolicy, deletePolicy } from './commands/policies';
 export type { RolloverResult } from './commands/rollover';
 export { rollover } from './commands/rollover';
+export { cancelTask } from './commands/tasks';
 export { applyTemplate, deleteTemplate } from './commands/templates';
 export type { BackupInfo, BackupType } from './config/backups';
 export { BackupStore } from './config/backups';
@@ -49,5 +50,7 @@ export type {
   PolicyInfo,
 } from './queries/policies';
 export { explainIsm, getPolicy, listPolicies } from './queries/policies';
+export type { TaskInfo } from './queries/tasks';
+export { getTask, listTasks } from './queries/tasks';
 export type { TemplateInfo } from './queries/templates';
 export { getTemplate, listTemplates } from './queries/templates';

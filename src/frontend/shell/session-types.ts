@@ -103,7 +103,8 @@ export type RemoveState =
       items: { label: string; value: string }[];
     }
   | { kind: 'profile'; items: { label: string; value: string }[] }
-  | { kind: 'backup'; items: { label: string; value: string }[] };
+  | { kind: 'backup'; items: { label: string; value: string }[] }
+  | { kind: 'task'; items: { label: string; value: string }[] };
 
 /** The actions the shell can trigger. */
 export interface SessionActions {

@@ -13,6 +13,8 @@ export interface RemoveScreenProps {
   items: { label: string; value: string }[];
   /** Renders the confirmation summary for the chosen names. */
   confirmation: (chosen: string[]) => ReactNode;
+  /** The confirm entry label, `yes, delete` when omitted. */
+  confirmLabel?: string;
   /** Called with the confirmed names. */
   onConfirm: (names: string[]) => void;
   /** Called when the user cancels. */
@@ -70,7 +72,7 @@ function Confirm(
       <Select
         items={[
           { label: 'no', value: false },
-          { label: 'yes, delete', value: true },
+          { label: props.confirmLabel ?? 'yes, delete', value: true },
         ]}
         onSelect={(confirmed) =>
           confirmed ? props.onConfirm(props.chosen) : props.onCancel()

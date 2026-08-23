@@ -2,6 +2,7 @@
 
 import {
   type Connection,
+  cancelTask,
   deleteAlias,
   deleteComponent,
   deleteIndices,
@@ -36,22 +37,65 @@ export function createRemoveActions(
       const state = deps.removeState;
       deps.setRemoveState(undefined);
       deps.navigate('/');
-      if (state === undefined) {
-        return;
-      }
-      if (state.kind === 'profile') {
-        removeProfiles(names, deps);
-        return;
-      }
-      if (state.kind === 'backup') {
-        removeBackups(names, deps);
-        return;
-      }
-      if (deps.connection !== undefined) {
-        void finishRemove(state, names, deps.connection, deps);
+      if (state !== undefined) {
+        dispatchRemove(state, names, deps);
       }
     },
   };
+}
+
+/**
+ * Routes a confirmed removal to its handler.
+ *
+ * @param state - The removal being run.
+ * @param names - The confirmed names.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+function dispatchRemove(
+  state: RemoveState,
+  names: string[],
+  deps: SessionDeps,
+): void {
+  if (state.kind === 'profile') {
+    removeProfiles(names, deps);
+    return;
+  }
+  if (state.kind === 'backup') {
+    removeBackups(names, deps);
+    return;
+  }
+  if (deps.connection === undefined) {
+    return;
+  }
+  if (state.kind === 'task') {
+    void cancelTasks(names, deps.connection, deps);
+    return;
+  }
+  void finishRemove(state, names, deps.connection, deps);
+}
+
+/**
+ * Cancels the confirmed tasks and reports each outcome.
+ *
+ * @param ids - The confirmed task identifiers.
+ * @param connection - The live connection.
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+async function cancelTasks(
+  ids: string[],
+  connection: Connection,
+  deps: SessionDeps,
+): Promise<void> {
+  for (const id of ids) {
+    try {
+      await cancelTask(connection, id);
+      pushLine(deps, `✔ Cancel of task ${id} requested.`, 'green');
+    } catch (error) {
+      pushFailure(deps, describeFailure(error));
+    }
+  }
 }
 
 /**
@@ -104,7 +148,7 @@ function removeBackups(ids: string[], deps: SessionDeps): void {
  * @returns Nothing.
  */
 async function finishRemove(
-  state: Exclude<RemoveState, { kind: 'profile' | 'backup' }>,
+  state: Exclude<RemoveState, { kind: 'profile' | 'backup' | 'task' }>,
   names: string[],
   connection: Connection,
   deps: SessionDeps,

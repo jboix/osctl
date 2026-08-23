@@ -167,11 +167,45 @@ function RemoveRoute(props: { session: Session }): ReactElement {
   if (state.kind === 'alias') {
     return <AliasRmScreen {...shared} targets={state.targets} />;
   }
+  if (state.kind === 'task') {
+    return <TaskCancel {...shared} items={state.items} />;
+  }
   return (
     <NamedRemove
       items={state.items}
       kind={state.kind}
       session={props.session}
+    />
+  );
+}
+
+/**
+ * Renders the cancel screen over the running tasks.
+ *
+ * @param props - The component props.
+ * @param props.items - The selectable tasks.
+ * @param props.onCancel - Called when the user cancels the screen.
+ * @param props.onConfirm - Called with the confirmed task identifiers.
+ * @returns The cancel screen element.
+ */
+function TaskCancel(props: {
+  items: { label: string; value: string }[];
+  onCancel: () => void;
+  onConfirm: (names: string[]) => void;
+}): ReactElement {
+  return (
+    <RemoveScreen
+      confirmation={(chosen) => (
+        <Text>
+          Cancel {chosen.length} task{chosen.length === 1 ? '' : 's'}:{' '}
+          {chosen.join(', ')}
+        </Text>
+      )}
+      confirmLabel="yes, cancel"
+      items={props.items}
+      onCancel={props.onCancel}
+      onConfirm={props.onConfirm}
+      title="Cancel tasks"
     />
   );
 }
