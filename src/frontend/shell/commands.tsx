@@ -27,6 +27,9 @@ import {
   runIndexLs,
   runIndexRm,
   runIndexRollover,
+  runIndexSettings,
+  runIndexSettingsApply,
+  runIndexShow,
 } from './index-commands';
 import { pushLine } from './output';
 import {
@@ -65,6 +68,21 @@ const COMMANDS: Command[] = [
     name: '/index rollover',
     description: 'Roll over a write alias and carry its aliases',
     run: (context, args) => void runIndexRollover(context, args[0]),
+  },
+  {
+    name: '/index show',
+    description: 'Print an index, from a picker: /index show [name]',
+    run: (context, args) => runIndexShow(context, args[0]),
+  },
+  {
+    name: '/index settings',
+    description: 'Print the settings of an index: /index settings [name]',
+    run: (context, args) => runIndexSettings(context, args[0]),
+  },
+  {
+    name: '/index settings apply',
+    description: 'Edit the settings of an index in your editor',
+    run: (context, args) => runIndexSettingsApply(context, args[0]),
   },
   {
     name: '/alias ls',

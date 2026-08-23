@@ -8,8 +8,8 @@ import {
   describeFailure,
 } from '../../engine/engine';
 import { readableStamp } from '../../utils/time';
-import { currentDocument } from './edit-actions';
 import { pushFailure, pushLine } from './output';
+import { currentDocument } from './pick-kinds';
 import type {
   EditPreviewState,
   SessionActions,
@@ -128,11 +128,13 @@ function showBackup(backup: BackupInfo, deps: SessionDeps): void {
 }
 
 /** The hint per backup type that cannot be restored directly. */
-const REFERENCE_ONLY: Record<'alias' | 'cluster', string> = {
+const REFERENCE_ONLY: Record<'alias' | 'cluster' | 'settings', string> = {
   alias:
     'Alias snapshots are reference only. Use /backup show and /alias apply.',
   cluster:
     'Cluster settings backups are reference only. Use /backup show and /cluster settings apply.',
+  settings:
+    'Index settings backups are reference only. Use /backup show and /index settings apply.',
 };
 
 /**
@@ -153,7 +155,7 @@ async function applyBackup(
     pushLine(deps, 'Not connected. Run /profile add.', 'yellow');
     return;
   }
-  if (backup.type === 'alias' || backup.type === 'cluster') {
+  if (backup.type !== 'template' && backup.type !== 'policy') {
     pushLine(deps, REFERENCE_ONLY[backup.type], 'yellow');
     return;
   }

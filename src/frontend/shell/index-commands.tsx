@@ -45,6 +45,48 @@ export async function runIndexLs(
 }
 
 /**
+ * Shows the named index, or opens the picker without a name.
+ *
+ * @param context - What the command can act on.
+ * @param name - The index name; a picker opens when omitted.
+ * @returns Nothing.
+ */
+export function runIndexShow(context: CommandContext, name?: string): void {
+  if (requireConnection(context) !== undefined) {
+    context.session.startShow('index', name);
+  }
+}
+
+/**
+ * Shows the settings of the named index, or opens the picker without a name.
+ *
+ * @param context - What the command can act on.
+ * @param name - The index name; a picker opens when omitted.
+ * @returns Nothing.
+ */
+export function runIndexSettings(context: CommandContext, name?: string): void {
+  if (requireConnection(context) !== undefined) {
+    context.session.startShow('index-settings', name);
+  }
+}
+
+/**
+ * Edits the settings of the named index, or opens the picker without a name.
+ *
+ * @param context - What the command can act on.
+ * @param name - The index name; a picker opens when omitted.
+ * @returns Nothing.
+ */
+export function runIndexSettingsApply(
+  context: CommandContext,
+  name?: string,
+): void {
+  if (requireConnection(context) !== undefined) {
+    context.session.startEdit('index-settings', name);
+  }
+}
+
+/**
  * Opens the deletion screen for the indices matching the pattern.
  *
  * @param context - What the command can act on.
@@ -189,7 +231,9 @@ function indexTable(indices: IndexInfo[]): TableProps {
       { label: 'index' },
       { label: 'health' },
       { label: 'docs', alignRight: true },
+      { label: 'deleted', alignRight: true },
       { label: 'size', alignRight: true },
+      { label: 'indexed', alignRight: true },
       { label: 'created' },
       { label: 'aliases (*: write)' },
     ],
@@ -197,7 +241,9 @@ function indexTable(indices: IndexInfo[]): TableProps {
       index.name,
       index.health,
       String(index.docsCount),
+      String(index.docsDeleted),
       index.storeSize,
+      String(index.indexed),
       index.creationDate,
       index.aliases.join(', '),
     ]),

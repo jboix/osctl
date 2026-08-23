@@ -5,6 +5,7 @@ import {
   EDIT_KINDS,
   editHeaderLines,
   editSkeleton,
+  settingsDelta,
 } from './edit-content';
 
 test('editSkeleton returns valid JSON for every kind', () => {
@@ -27,6 +28,18 @@ test('editHeaderLines appends the extra reference lines', () => {
 test('editHeaderLines names the cluster settings without a name', () => {
   const lines = editHeaderLines('cluster');
   expect(lines[0]).toBe('osctl: edit the cluster settings.');
+});
+
+test('settingsDelta keeps changed and added keys, nulls removed ones', () => {
+  const delta = settingsDelta(
+    { 'index.a': '1', 'index.b': '2', 'index.c': '3' },
+    { 'index.a': '1', 'index.b': '5', 'index.d': '4' },
+  );
+  expect(delta).toEqual({ 'index.b': '5', 'index.d': '4', 'index.c': null });
+});
+
+test('settingsDelta is empty for an unchanged document', () => {
+  expect(settingsDelta({ 'index.a': '1' }, { 'index.a': '1' })).toEqual({});
 });
 
 test('aliasActionLines describes add and remove actions', () => {

@@ -5,11 +5,8 @@ import {
   type Connection,
   clusterSettings,
   describeFailure,
-  getPolicy,
-  getTemplate,
+  getIndexSettings,
   listAliases,
-  listPolicies,
-  listTemplates,
 } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
 import {
@@ -20,7 +17,15 @@ import {
 import { buildPreview, type EditTarget, finish } from './edit-preview';
 import { type JsoncResult, parseJsonc } from './jsonc';
 import { pushFailure, pushLine } from './output';
-import type { SessionActions, SessionDeps } from './session-types';
+import {
+  currentDocument,
+  DOC_TITLES,
+  listNames,
+  NOUNS,
+  offersNew,
+  PLURALS,
+} from './pick-kinds';
+import type { PickKind, SessionActions, SessionDeps } from './session-types';
 
 /** The actions of the editor flow. */
 type EditActions = Pick<
@@ -80,7 +85,7 @@ export function createEditActions(deps: SessionDeps): EditActions {
  * @returns Nothing.
  */
 function openOrPick(
-  kind: 'template' | 'policy',
+  kind: PickKind,
   action: 'apply' | 'show',
   name: string | undefined,
   deps: SessionDeps,
@@ -107,7 +112,7 @@ function openOrPick(
  * @returns Nothing.
  */
 async function resolvePattern(
-  kind: 'template' | 'policy',
+  kind: PickKind,
   action: 'apply' | 'show',
   pattern: string,
   deps: SessionDeps,
@@ -122,7 +127,7 @@ async function resolvePattern(
     );
     const [first] = names;
     if (first === undefined) {
-      pushLine(deps, `No ${kind} matches "${pattern}".`, 'yellow');
+      pushLine(deps, `No ${NOUNS[kind]} matches "${pattern}".`, 'yellow');
       return;
     }
     if (names.length === 1) {
@@ -181,7 +186,7 @@ function close(deps: SessionDeps): void {
  * @returns Nothing.
  */
 async function openPicker(
-  kind: 'template' | 'policy',
+  kind: PickKind,
   action: 'apply' | 'show',
   deps: SessionDeps,
 ): Promise<void> {
@@ -191,12 +196,8 @@ async function openPicker(
   }
   try {
     const names = await listNames(kind, connection);
-    if (action === 'show' && names.length === 0) {
-      pushLine(
-        deps,
-        `No ${kind === 'template' ? 'templates' : 'policies'}.`,
-        'dim',
-      );
+    if (names.length === 0 && !offersNew(kind, action)) {
+      pushLine(deps, `No ${PLURALS[kind]}.`, 'dim');
       return;
     }
     deps.setEditPick({ kind, names, action });
@@ -204,23 +205,6 @@ async function openPicker(
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
-}
-
-/**
- * Lists the document names of the kind.
- *
- * @param kind - The resource kind.
- * @param connection - The live connection.
- * @returns The names, sorted.
- */
-async function listNames(
-  kind: 'template' | 'policy',
-  connection: Connection,
-): Promise<string[]> {
-  if (kind === 'template') {
-    return (await listTemplates(connection)).map((template) => template.name);
-  }
-  return (await listPolicies(connection)).map((policy) => policy.name);
 }
 
 /**
@@ -232,7 +216,7 @@ async function listNames(
  * @returns Nothing.
  */
 async function showDocument(
-  kind: 'template' | 'policy',
+  kind: PickKind,
   name: string,
   deps: SessionDeps,
 ): Promise<void> {
@@ -244,10 +228,13 @@ async function showDocument(
   try {
     const document = await currentDocument(kind, name, connection);
     if (document === undefined) {
-      pushLine(deps, `No ${kind} named "${name}".`, 'yellow');
+      pushLine(deps, `No ${NOUNS[kind]} named "${name}".`, 'yellow');
       return;
     }
-    deps.showDoc(`${kind} "${name}"`, JSON.stringify(document, null, 2));
+    deps.showDoc(
+      `${DOC_TITLES[kind]} "${name}"`,
+      JSON.stringify(document, null, 2),
+    );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
@@ -263,7 +250,7 @@ async function showDocument(
  * @returns Nothing.
  */
 async function openDocument(
-  kind: 'template' | 'policy',
+  kind: PickKind,
   name: string,
   isNew: boolean,
   deps: SessionDeps,
@@ -272,12 +259,16 @@ async function openDocument(
   if (connection === undefined) {
     return;
   }
+  if (kind === 'index-settings') {
+    await openIndexSettingsEditor(name, deps, connection);
+    return;
+  }
   try {
     const current = isNew
       ? undefined
       : await currentDocument(kind, name, connection);
     if (!isNew && current === undefined) {
-      pushLine(deps, `No ${kind} named "${name}".`, 'yellow');
+      pushLine(deps, `No ${NOUNS[kind]} named "${name}".`, 'yellow');
       close(deps);
       return;
     }
@@ -291,25 +282,6 @@ async function openDocument(
     pushFailure(deps, describeFailure(error));
     close(deps);
   }
-}
-
-/**
- * Reads the current document of the picked kind.
- *
- * @param kind - The resource kind.
- * @param name - The document name.
- * @param connection - The live connection.
- * @returns The document, or undefined when it does not exist.
- */
-export async function currentDocument(
-  kind: 'template' | 'policy',
-  name: string,
-  connection: Connection,
-): Promise<unknown> {
-  if (kind === 'template') {
-    return getTemplate(connection, name);
-  }
-  return (await getPolicy(connection, name))?.policy;
 }
 
 /**
@@ -337,6 +309,46 @@ async function openAliasEditor(deps: SessionDeps): Promise<void> {
     );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
+  }
+}
+
+/**
+ * Opens the editor over the current settings of one index.
+ *
+ * @param name - The index name.
+ * @param deps - The session state setters and the navigation.
+ * @param connection - The live connection.
+ * @returns Nothing.
+ */
+async function openIndexSettingsEditor(
+  name: string,
+  deps: SessionDeps,
+  connection: Connection,
+): Promise<void> {
+  try {
+    const settings = await getIndexSettings(connection, name);
+    if (settings === undefined) {
+      pushLine(deps, `No index named "${name}".`, 'yellow');
+      close(deps);
+      return;
+    }
+    const base = JSON.stringify(settings, null, 2);
+    void runEditor(
+      {
+        kind: 'index-settings',
+        name,
+        body: base,
+        base,
+        reference: [
+          'Removing a line resets the setting to its default.',
+          'Static settings like index.number_of_shards cannot be changed.',
+        ],
+      },
+      deps,
+    );
+  } catch (error) {
+    pushFailure(deps, describeFailure(error));
+    close(deps);
   }
 }
 

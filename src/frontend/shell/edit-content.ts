@@ -10,6 +10,7 @@ export const EDIT_KINDS = [
   'alias',
   'index',
   'cluster',
+  'index-settings',
 ] as const;
 
 /** One resource kind of the editor flow. */
@@ -24,6 +25,8 @@ const DOCS: Record<EditKind, string> = {
     'https://docs.opensearch.org/latest/api-reference/index-apis/create-index/',
   cluster:
     'https://docs.opensearch.org/latest/api-reference/cluster-api/cluster-settings/',
+  'index-settings':
+    'https://docs.opensearch.org/latest/api-reference/index-apis/update-settings/',
 };
 
 /** What the file header calls the edited resource. */
@@ -33,6 +36,7 @@ const NOUNS: Record<EditKind, string> = {
   alias: 'alias actions',
   index: 'index',
   cluster: 'cluster settings',
+  'index-settings': 'index settings',
 };
 
 /** The minimal valid body per kind, shown when creating a new document. */
@@ -52,6 +56,7 @@ const SKELETONS: Record<EditKind, unknown> = {
   alias: { actions: [] },
   index: { settings: {}, mappings: {}, aliases: {} },
   cluster: { persistent: {}, transient: {} },
+  'index-settings': {},
 };
 
 /**
@@ -85,6 +90,32 @@ export function editHeaderLines(
     'Empty the file to abort.',
     ...extra,
   ];
+}
+
+/**
+ * Computes the settings the apply sends: changed and added keys with their
+ * new value, removed keys as null, which resets them to the default.
+ *
+ * @param base - The current flat settings.
+ * @param edited - The edited flat settings.
+ * @returns The changed settings.
+ */
+export function settingsDelta(
+  base: Record<string, unknown>,
+  edited: Record<string, unknown>,
+): Record<string, unknown> {
+  const delta: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(edited)) {
+    if (JSON.stringify(base[key]) !== JSON.stringify(value)) {
+      delta[key] = value;
+    }
+  }
+  for (const key of Object.keys(base)) {
+    if (!(key in edited)) {
+      delta[key] = null;
+    }
+  }
+  return delta;
 }
 
 /** The body of one alias action, as far as the summary reads it. */
