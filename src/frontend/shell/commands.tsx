@@ -45,6 +45,7 @@ import {
   runPolicyRm,
   runPolicyShow,
 } from './policy-commands';
+import { runTaskCancel, runTaskLs, runTaskShow } from './task-commands';
 import {
   runTemplateApply,
   runTemplateLs,
@@ -202,6 +203,21 @@ const COMMANDS: Command[] = [
     name: '/cluster explain',
     description: 'Explain why a shard is unassigned',
     run: (context) => void runClusterExplain(context),
+  },
+  {
+    name: '/task ls',
+    description: 'List the running tasks, longest running first',
+    run: (context) => void runTaskLs(context),
+  },
+  {
+    name: '/task show',
+    description: 'Print a task with its status: /task show <id>',
+    run: (context, args) => void runTaskShow(context, args[0]),
+  },
+  {
+    name: '/task cancel',
+    description: 'Cancel tasks from a selection: /task cancel [id]',
+    run: (context, args) => void runTaskCancel(context, args[0]),
   },
   {
     name: '/backup ls',

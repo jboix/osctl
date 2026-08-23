@@ -62,6 +62,17 @@ typing; the slash form is the official one.
 | `/cluster nodes`          | List the nodes with roles, version, heap, CPU, and load. Marks the cluster manager with `*` | `_cat/nodes`                                                  |
 | `/cluster explain`        | Explain why the first unassigned shard is unassigned, with the per node deciders            | `GET /_cluster/allocation/explain`                            |
 
+## task
+
+| Command             | Description                                                                                 | Backing API                 |
+|---------------------|---------------------------------------------------------------------------------------------|-----------------------------|
+| `/task ls`          | List running tasks with action, type, parent, running time, and node, longest running first | `_cat/tasks`                |
+| `/task show <id>`   | Print a task with its status and progress counters                                          | `GET /_tasks/{id}`          |
+| `/task cancel [id]` | Cancel tasks from a selection after confirmation. Cancellation is asynchronous              | `POST /_tasks/{id}/_cancel` |
+
+Tasks cannot be created directly: an operation started with `wait_for_completion=false`
+returns one.
+
 ## backup
 
 | Command                | Description                                                                |
