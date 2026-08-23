@@ -14,6 +14,7 @@ export const EDIT_KINDS = [
   'index-settings',
   'snapshot',
   'restore',
+  'reindex',
 ] as const;
 
 /** One resource kind of the editor flow. */
@@ -35,6 +36,7 @@ const DOCS: Record<EditKind, string> = {
     'https://docs.opensearch.org/latest/api-reference/snapshots/create-snapshot/',
   restore:
     'https://docs.opensearch.org/latest/api-reference/snapshots/restore-snapshot/',
+  reindex: 'https://docs.opensearch.org/latest/im-plugin/reindex-data/',
 };
 
 /** What the file header calls the edited resource. */
@@ -48,6 +50,7 @@ const NOUNS: Record<EditKind, string> = {
   'index-settings': 'index settings',
   snapshot: 'snapshot body of',
   restore: 'restore body of snapshot',
+  reindex: 'reindex body',
 };
 
 /** The minimal valid body per kind, shown when creating a new document. */
@@ -82,6 +85,10 @@ const SKELETONS: Record<EditKind, unknown> = {
     ignore_unavailable: true,
     include_global_state: false,
     include_aliases: true,
+  },
+  reindex: {
+    source: { index: 'source-index' },
+    dest: { index: 'dest-index' },
   },
 };
 

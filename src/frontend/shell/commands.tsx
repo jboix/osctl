@@ -257,6 +257,15 @@ const COMMANDS: Command[] = [
     run: (context, args) => void runSnapshotRm(context, args[0], args[1]),
   },
   {
+    name: '/reindex',
+    description: 'Edit a reindex body and run it as a background task',
+    run: (context) => {
+      if (requireConnection(context) !== undefined) {
+        context.session.startReindex();
+      }
+    },
+  },
+  {
     name: '/backup ls',
     description: 'List the backups of this profile: /backup ls [pattern]',
     run: (context, args) => runBackupLs(context, args[0]),

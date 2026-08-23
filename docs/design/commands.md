@@ -86,6 +86,12 @@ returns one.
 
 Snapshot clone, repository cleanup, and repository management are not covered.
 
+## reindex
+
+| Command    | Description                                                               | Backing API                                |
+|------------|---------------------------------------------------------------------------|--------------------------------------------|
+| `/reindex` | Edit a reindex body in the editor, confirm, then run as a background task | `POST /_reindex?wait_for_completion=false` |
+
 ## backup
 
 | Command                | Description                                                                |
