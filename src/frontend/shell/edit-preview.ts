@@ -12,7 +12,9 @@ import {
   type BackupType,
   type Connection,
   createIndex,
+  createSnapshot,
   describeFailure,
+  restoreSnapshot,
 } from '../../engine/engine';
 import { aliasActionLines, type EditKind, settingsDelta } from './edit-content';
 import { pushFailure, pushLine } from './output';
@@ -24,6 +26,8 @@ export interface EditTarget {
   kind: EditKind;
   /** The document name, absent for alias actions. */
   name?: string;
+  /** The repository name, for the snapshot kinds. */
+  repo?: string;
   /** The starting body the editor opens on. */
   body: string;
   /** The current document body; its presence turns the preview into a diff. */
@@ -50,6 +54,7 @@ export function buildPreview(
   return {
     kind: target.kind,
     name: target.name,
+    repo: target.repo,
     payload: previewPayload(target, payload),
     title: TITLES[target.kind](target.name ?? ''),
     lines: previewLines(target, pretty, payload),
@@ -114,6 +119,8 @@ const TITLES: Record<EditKind, (name: string) => string> = {
   index: (name) => `Create index "${name}"?`,
   cluster: () => 'Apply these cluster settings?',
   'index-settings': (name) => `Save the settings of "${name}"?`,
+  snapshot: (name) => `Take snapshot "${name}"?`,
+  restore: (name) => `Restore snapshot "${name}"?`,
 };
 
 /**
@@ -136,7 +143,8 @@ function previewLines(
     const diff = diffLines(target.base, pretty);
     return diff.length === 0 ? [{ sign: ' ', text: '(no changes)' }] : diff;
   }
-  const sign = target.kind === 'index' ? ' ' : '+';
+  const additive = !['index', 'snapshot', 'restore'].includes(target.kind);
+  const sign = additive ? '+' : ' ';
   return pretty.split('\n').map((text) => ({ sign, text }));
 }
 
@@ -210,15 +218,9 @@ async function applyEdit(
   const name = preview.name ?? '';
   switch (preview.kind) {
     case 'template':
-      await applyTemplate(connection, name, preview.payload);
-      return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
     case 'component':
-      await applyComponent(connection, name, preview.payload);
-      return `✔ Component template "${name}" saved. Index templates pick it up on their next apply.`;
-    case 'policy': {
-      const outcome = await applyPolicy(connection, name, preview.payload);
-      return `✔ Policy "${name}" ${outcome}.`;
-    }
+    case 'policy':
+      return applyDocumentEdit(preview, connection);
     case 'alias': {
       const count = await applyAliases(connection, preview.payload);
       return `✔ Applied ${count} alias action${count === 1 ? '' : 's'}.`;
@@ -232,5 +234,53 @@ async function applyEdit(
     case 'index-settings':
       await applyIndexSettings(connection, name, preview.payload);
       return `✔ Settings of "${name}" saved.`;
+    case 'snapshot':
+    case 'restore':
+      return applySnapshotEdit(preview, connection);
   }
+}
+
+/**
+ * Saves the confirmed template, component template, or policy.
+ *
+ * @param preview - The confirmed edit.
+ * @param connection - The live connection.
+ * @returns The confirmation line.
+ */
+async function applyDocumentEdit(
+  preview: EditPreviewState,
+  connection: Connection,
+): Promise<string> {
+  const name = preview.name ?? '';
+  if (preview.kind === 'template') {
+    await applyTemplate(connection, name, preview.payload);
+    return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
+  }
+  if (preview.kind === 'component') {
+    await applyComponent(connection, name, preview.payload);
+    return `✔ Component template "${name}" saved. Index templates pick it up on their next apply.`;
+  }
+  const outcome = await applyPolicy(connection, name, preview.payload);
+  return `✔ Policy "${name}" ${outcome}.`;
+}
+
+/**
+ * Starts the confirmed snapshot or restore.
+ *
+ * @param preview - The confirmed edit.
+ * @param connection - The live connection.
+ * @returns The confirmation line.
+ */
+async function applySnapshotEdit(
+  preview: EditPreviewState,
+  connection: Connection,
+): Promise<string> {
+  const repo = preview.repo ?? '';
+  const name = preview.name ?? '';
+  if (preview.kind === 'snapshot') {
+    await createSnapshot(connection, repo, name, preview.payload);
+    return `✔ Snapshot "${repo}/${name}" started. Watch it with /snapshot ls.`;
+  }
+  await restoreSnapshot(connection, repo, name, preview.payload);
+  return `✔ Restore of "${repo}/${name}" started.`;
 }

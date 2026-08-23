@@ -12,6 +12,8 @@ export const EDIT_KINDS = [
   'index',
   'cluster',
   'index-settings',
+  'snapshot',
+  'restore',
 ] as const;
 
 /** One resource kind of the editor flow. */
@@ -29,6 +31,10 @@ const DOCS: Record<EditKind, string> = {
     'https://docs.opensearch.org/latest/api-reference/cluster-api/cluster-settings/',
   'index-settings':
     'https://docs.opensearch.org/latest/api-reference/index-apis/update-settings/',
+  snapshot:
+    'https://docs.opensearch.org/latest/api-reference/snapshots/create-snapshot/',
+  restore:
+    'https://docs.opensearch.org/latest/api-reference/snapshots/restore-snapshot/',
 };
 
 /** What the file header calls the edited resource. */
@@ -40,6 +46,8 @@ const NOUNS: Record<EditKind, string> = {
   index: 'index',
   cluster: 'cluster settings',
   'index-settings': 'index settings',
+  snapshot: 'snapshot body of',
+  restore: 'restore body of snapshot',
 };
 
 /** The minimal valid body per kind, shown when creating a new document. */
@@ -63,6 +71,18 @@ const SKELETONS: Record<EditKind, unknown> = {
   index: { settings: {}, mappings: {}, aliases: {} },
   cluster: { persistent: {}, transient: {} },
   'index-settings': {},
+  snapshot: {
+    indices: '*',
+    ignore_unavailable: true,
+    include_global_state: true,
+    partial: false,
+  },
+  restore: {
+    indices: '*',
+    ignore_unavailable: true,
+    include_global_state: false,
+    include_aliases: true,
+  },
 };
 
 /**

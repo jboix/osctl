@@ -216,6 +216,7 @@ const NOUNS = {
   policy: 'policies',
   profile: 'profiles',
   backup: 'backups',
+  snapshot: 'snapshots',
 } as const;
 
 /**
@@ -228,7 +229,7 @@ const NOUNS = {
  * @returns The removal screen element.
  */
 function NamedRemove(props: {
-  kind: 'template' | 'component' | 'policy' | 'profile' | 'backup';
+  kind: 'template' | 'component' | 'policy' | 'profile' | 'backup' | 'snapshot';
   items: { label: string; value: string }[];
   session: Session;
 }): ReactElement {

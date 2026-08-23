@@ -69,6 +69,8 @@ export interface EditPreviewState {
   kind: EditKind;
   /** The document name, absent for alias actions. */
   name?: string;
+  /** The repository name, for the snapshot kinds. */
+  repo?: string;
   /** The parsed payload to apply. */
   payload: unknown;
   /** The confirmation title. */
@@ -104,7 +106,13 @@ export type RemoveState =
     }
   | { kind: 'profile'; items: { label: string; value: string }[] }
   | { kind: 'backup'; items: { label: string; value: string }[] }
-  | { kind: 'task'; items: { label: string; value: string }[] };
+  | { kind: 'task'; items: { label: string; value: string }[] }
+  | {
+      kind: 'snapshot';
+      /** The repository holding the selectable snapshots. */
+      repo: string;
+      items: { label: string; value: string }[];
+    };
 
 /** The actions the shell can trigger. */
 export interface SessionActions {
@@ -120,6 +128,10 @@ export interface SessionActions {
   startClusterSettingsEdit: () => void;
   /** Opens the editor over the body of a new index. */
   startIndexEdit: (name: string) => void;
+  /** Opens the editor over the body of a new snapshot. */
+  startSnapshotCreate: (repo: string, name: string) => void;
+  /** Opens the editor over the restore body of a snapshot. */
+  startSnapshotRestore: (repo: string, name: string) => void;
   /** Closes the editor flow without applying. */
   cancelEdit: () => void;
   /** Applies the previewed edit. */

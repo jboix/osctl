@@ -1,6 +1,5 @@
 // The editor flow: pick a document, edit it in $EDITOR, preview, apply.
 
-import { type EditorResult, editText } from 'inkstand';
 import {
   type Connection,
   clusterSettings,
@@ -9,13 +8,9 @@ import {
   listAliases,
 } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
-import {
-  aliasReferenceLines,
-  editHeaderLines,
-  editSkeleton,
-} from './edit-content';
-import { buildPreview, type EditTarget, finish } from './edit-preview';
-import { type JsoncResult, parseJsonc } from './jsonc';
+import { aliasReferenceLines, editSkeleton } from './edit-content';
+import { finish } from './edit-preview';
+import { closeEdit, runEditor } from './edit-runner';
 import { pushFailure, pushLine } from './output';
 import {
   currentDocument,
@@ -26,6 +21,7 @@ import {
   PLURALS,
 } from './pick-kinds';
 import type { PickKind, SessionActions, SessionDeps } from './session-types';
+import { openRestoreEditor, openSnapshotEditor } from './snapshot-edit';
 
 /** The actions of the editor flow. */
 type EditActions = Pick<
@@ -36,6 +32,8 @@ type EditActions = Pick<
   | 'startAliasEdit'
   | 'startClusterSettingsEdit'
   | 'startIndexEdit'
+  | 'startSnapshotCreate'
+  | 'startSnapshotRestore'
   | 'cancelEdit'
   | 'confirmEdit'
 >;
@@ -63,15 +61,28 @@ export function createEditActions(deps: SessionDeps): EditActions {
         deps,
       );
     },
-    cancelEdit: (): void => close(deps),
-    confirmEdit: (): void => {
-      const preview = deps.editPreview;
-      close(deps);
-      if (preview !== undefined) {
-        void finish(preview, deps);
-      }
+    startSnapshotCreate: (repo, name): void =>
+      openSnapshotEditor(repo, name, deps),
+    startSnapshotRestore: (repo, name): void => {
+      void openRestoreEditor(repo, name, deps);
     },
+    cancelEdit: (): void => closeEdit(deps),
+    confirmEdit: (): void => confirmEdit(deps),
   };
+}
+
+/**
+ * Applies the previewed edit and closes the flow.
+ *
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+function confirmEdit(deps: SessionDeps): void {
+  const preview = deps.editPreview;
+  closeEdit(deps);
+  if (preview !== undefined) {
+    void finish(preview, deps);
+  }
 }
 
 /**
@@ -166,18 +177,6 @@ function dispatchPick(name: string, isNew: boolean, deps: SessionDeps): void {
 }
 
 /**
- * Clears the editor flow state and returns to the prompt.
- *
- * @param deps - The session state setters and the navigation.
- * @returns Nothing.
- */
-function close(deps: SessionDeps): void {
-  deps.setEditPick(undefined);
-  deps.setEditPreview(undefined);
-  deps.navigate('/');
-}
-
-/**
  * Loads the document names and opens the picker screen.
  *
  * @param kind - The picked resource kind.
@@ -224,7 +223,7 @@ async function showDocument(
   if (connection === undefined) {
     return;
   }
-  close(deps);
+  closeEdit(deps);
   try {
     const document = await currentDocument(kind, name, connection);
     if (document === undefined) {
@@ -269,7 +268,7 @@ async function openDocument(
       : await currentDocument(kind, name, connection);
     if (!isNew && current === undefined) {
       pushLine(deps, `No ${NOUNS[kind]} named "${name}".`, 'yellow');
-      close(deps);
+      closeEdit(deps);
       return;
     }
     const base =
@@ -280,7 +279,7 @@ async function openDocument(
     );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
-    close(deps);
+    closeEdit(deps);
   }
 }
 
@@ -329,7 +328,7 @@ async function openIndexSettingsEditor(
     const settings = await getIndexSettings(connection, name);
     if (settings === undefined) {
       pushLine(deps, `No index named "${name}".`, 'yellow');
-      close(deps);
+      closeEdit(deps);
       return;
     }
     const base = JSON.stringify(settings, null, 2);
@@ -348,7 +347,7 @@ async function openIndexSettingsEditor(
     );
   } catch (error) {
     pushFailure(deps, describeFailure(error));
-    close(deps);
+    closeEdit(deps);
   }
 }
 
@@ -380,66 +379,4 @@ async function openClusterSettingsEditor(deps: SessionDeps): Promise<void> {
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
-}
-
-/**
- * Runs the editor over the target, parses the result, and opens the preview.
- *
- * @param target - What the editor run works on.
- * @param deps - The session state setters and the navigation.
- * @returns Nothing.
- */
-async function runEditor(target: EditTarget, deps: SessionDeps): Promise<void> {
-  const result = await editText(
-    {
-      prefix: 'osctl',
-      slug: [target.kind, target.name].filter(Boolean).join('-'),
-      body: target.body,
-      header: editHeaderLines(target.kind, target.name, target.reference)
-        .map((line) => `// ${line}`)
-        .join('\n'),
-      extension: 'jsonc',
-    },
-    { suspend: deps.suspend, redraw: deps.redraw },
-  );
-  const parsed = parseJsonc(result.text);
-  const abort = abortLine(result, parsed);
-  if (abort !== undefined) {
-    pushLine(deps, abort.text, abort.tone);
-    close(deps);
-    return;
-  }
-  if (parsed.kind === 'ok') {
-    deps.setEditPreview(buildPreview(target, parsed.payload));
-    deps.navigate('/edit/preview');
-  }
-}
-
-/**
- * Decides whether an editor run aborts, and with which message.
- *
- * @param result - The editor outcome.
- * @param parsed - The parsed file content.
- * @returns The abort line, or undefined when the edit goes on to a preview.
- */
-function abortLine(
-  result: EditorResult,
-  parsed: JsoncResult,
-): { text: string; tone: 'yellow' | 'dim' } | undefined {
-  if (result.error !== undefined) {
-    return { text: result.error, tone: 'yellow' };
-  }
-  if (!result.changed) {
-    return { text: 'Edit aborted: the file was not changed.', tone: 'dim' };
-  }
-  if (parsed.kind === 'empty') {
-    return { text: 'Edit aborted: the file is empty.', tone: 'dim' };
-  }
-  if (parsed.kind === 'error') {
-    return {
-      text: `${parsed.message} Nothing applied. Your edit is kept at ${result.path}.`,
-      tone: 'yellow',
-    };
-  }
-  return undefined;
 }
