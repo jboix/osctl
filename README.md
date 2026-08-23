@@ -60,6 +60,7 @@ osctl
 | `/cluster`  | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
 | `/task`     | `ls`, `show`, `cancel`                                                 |
 | `/snapshot` | `repo ls`, `ls`, `show`, `create`, `restore`, `rm`                     |
+| `/reindex`  | run a reindex as a background task                                     |
 | `/backup`   | `ls`, `show`, `apply`, `rm`                                            |
 | `/profile`  | `add`, `ls`, `default`, `rm`                                           |
 

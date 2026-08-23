@@ -34,6 +34,7 @@ type EditActions = Pick<
   | 'startIndexEdit'
   | 'startSnapshotCreate'
   | 'startSnapshotRestore'
+  | 'startReindex'
   | 'cancelEdit'
   | 'confirmEdit'
 >;
@@ -66,9 +67,27 @@ export function createEditActions(deps: SessionDeps): EditActions {
     startSnapshotRestore: (repo, name): void => {
       void openRestoreEditor(repo, name, deps);
     },
+    startReindex: (): void => openReindexEditor(deps),
     cancelEdit: (): void => closeEdit(deps),
     confirmEdit: (): void => confirmEdit(deps),
   };
+}
+
+/**
+ * Opens the editor over a reindex body skeleton.
+ *
+ * @param deps - The session state setters and the navigation.
+ * @returns Nothing.
+ */
+function openReindexEditor(deps: SessionDeps): void {
+  void runEditor(
+    {
+      kind: 'reindex',
+      body: editSkeleton('reindex'),
+      reference: ['The reindex runs as a background task once confirmed.'],
+    },
+    deps,
+  );
 }
 
 /**

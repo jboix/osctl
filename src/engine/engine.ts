@@ -11,6 +11,7 @@ export { deleteAlias } from './commands/delete-alias';
 export { deleteIndices } from './commands/delete-indices';
 export { applyIndexSettings } from './commands/index-settings';
 export { applyPolicy, deletePolicy } from './commands/policies';
+export { reindex } from './commands/reindex';
 export type { RolloverResult } from './commands/rollover';
 export { rollover } from './commands/rollover';
 export {

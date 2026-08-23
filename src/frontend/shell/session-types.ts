@@ -132,6 +132,8 @@ export interface SessionActions {
   startSnapshotCreate: (repo: string, name: string) => void;
   /** Opens the editor over the restore body of a snapshot. */
   startSnapshotRestore: (repo: string, name: string) => void;
+  /** Opens the editor over a reindex body skeleton. */
+  startReindex: () => void;
   /** Closes the editor flow without applying. */
   cancelEdit: () => void;
   /** Applies the previewed edit. */

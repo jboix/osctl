@@ -14,6 +14,7 @@ import {
   createIndex,
   createSnapshot,
   describeFailure,
+  reindex,
   restoreSnapshot,
 } from '../../engine/engine';
 import { aliasActionLines, type EditKind, settingsDelta } from './edit-content';
@@ -121,6 +122,7 @@ const TITLES: Record<EditKind, (name: string) => string> = {
   'index-settings': (name) => `Save the settings of "${name}"?`,
   snapshot: (name) => `Take snapshot "${name}"?`,
   restore: (name) => `Restore snapshot "${name}"?`,
+  reindex: () => 'Start this reindex?',
 };
 
 /**
@@ -143,7 +145,9 @@ function previewLines(
     const diff = diffLines(target.base, pretty);
     return diff.length === 0 ? [{ sign: ' ', text: '(no changes)' }] : diff;
   }
-  const additive = !['index', 'snapshot', 'restore'].includes(target.kind);
+  const additive = !['index', 'snapshot', 'restore', 'reindex'].includes(
+    target.kind,
+  );
   const sign = additive ? '+' : ' ';
   return pretty.split('\n').map((text) => ({ sign, text }));
 }
@@ -236,7 +240,8 @@ async function applyEdit(
       return `✔ Settings of "${name}" saved.`;
     case 'snapshot':
     case 'restore':
-      return applySnapshotEdit(preview, connection);
+    case 'reindex':
+      return applyBackgroundEdit(preview, connection);
   }
 }
 
@@ -265,13 +270,13 @@ async function applyDocumentEdit(
 }
 
 /**
- * Starts the confirmed snapshot or restore.
+ * Starts the confirmed background operation: snapshot, restore, or reindex.
  *
  * @param preview - The confirmed edit.
  * @param connection - The live connection.
  * @returns The confirmation line.
  */
-async function applySnapshotEdit(
+async function applyBackgroundEdit(
   preview: EditPreviewState,
   connection: Connection,
 ): Promise<string> {
@@ -281,6 +286,10 @@ async function applySnapshotEdit(
     await createSnapshot(connection, repo, name, preview.payload);
     return `✔ Snapshot "${repo}/${name}" started. Watch it with /snapshot ls.`;
   }
-  await restoreSnapshot(connection, repo, name, preview.payload);
-  return `✔ Restore of "${repo}/${name}" started.`;
+  if (preview.kind === 'restore') {
+    await restoreSnapshot(connection, repo, name, preview.payload);
+    return `✔ Restore of "${repo}/${name}" started.`;
+  }
+  const task = await reindex(connection, preview.payload);
+  return `✔ Reindex started as task ${task}. Watch it with /task show ${task}.`;
 }
