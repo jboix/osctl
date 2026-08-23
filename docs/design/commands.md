@@ -8,10 +8,13 @@ typing; the slash form is the official one.
 
 | Command                              | Description                                                                                                                                       | Backing API                                 |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
-| `/index ls [pattern]`                | List indices with health, doc count, size, creation date, and attached aliases                                                                    | `_cat/indices`, `_cat/aliases`              |
+| `/index ls [pattern]`                | List indices with health, doc, deleted, and indexed counts, size, creation date, and aliases                                                      | `_cat/indices`, `_cat/aliases`              |
 | `/index rm [pattern]`                | Delete indices. Opens a multi-select list of the matching indices. Confirms with index count and total size. Warns when a write index is selected | `DELETE /{index}`                           |
 | `/index create <name> [write-alias]` | Create an index. Without the alias shorthand, the body opens in the editor                                                                        | `PUT /{index}`                              |
 | `/index rollover <alias>`            | Roll over the write alias, then reapply the aliases the new head is missing                                                                       | `POST /{alias}/_rollover`, `POST /_aliases` |
+| `/index show [name]`                 | Print an index, from a picker when the name does not settle it                                                                                    | `GET /{index}`                              |
+| `/index settings [name]`             | Print an index's settings with flat keys, from a picker when the name does not settle it                                                          | `GET /{index}/_settings`                    |
+| `/index settings apply [name]`       | Edit an index's settings, confirm a line diff, then save                                                                                          | `GET` + `PUT /{index}/_settings`            |
 
 ## alias
 
@@ -62,7 +65,7 @@ typing; the slash form is the official one.
 ## Backups
 
 Every change that overwrites existing documents is backed up, that includes: `/template apply`, 
-`/policy apply`, `/alias apply` and `/cluster settings apply`.
+`/policy apply`, `/alias apply`, `/cluster settings apply` and `/index settings apply`.
 
 - Backups are stored per profile under 
   `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`.

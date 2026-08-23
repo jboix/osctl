@@ -15,6 +15,7 @@ import { RemoveScreen } from '../screens/remove';
 import { backupLabel } from './backup-actions';
 import { CommandInput } from './command-input';
 import { pushLine } from './output';
+import { offersNew } from './pick-kinds';
 import type { Session } from './session';
 
 /** The input-area screens, one route per path. */
@@ -242,6 +243,14 @@ function BackupPickRoute(props: { session: Session }): ReactElement {
   );
 }
 
+/** The picker title per pickable kind. */
+const PICK_TITLES = {
+  template: 'Templates',
+  policy: 'Policies',
+  index: 'Indices',
+  'index-settings': 'Indices',
+} as const;
+
 /**
  * Renders the /edit/pick screen, or returns home without a picker.
  *
@@ -256,12 +265,12 @@ function EditPickRoute(props: { session: Session }): ReactElement {
   }
   return (
     <DocPick
-      allowNew={state.action === 'apply'}
+      allowNew={offersNew(state.kind, state.action)}
       names={state.names}
       noun={state.kind}
       onCancel={props.session.cancelEdit}
       onPick={props.session.pickEditTarget}
-      title={state.kind === 'template' ? 'Templates' : 'Policies'}
+      title={PICK_TITLES[state.kind]}
     />
   );
 }

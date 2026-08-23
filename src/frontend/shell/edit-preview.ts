@@ -4,14 +4,16 @@ import { type DiffLine, diffLines } from 'inkstand';
 import {
   applyAliases,
   applyClusterSettings,
+  applyIndexSettings,
   applyPolicy,
   applyTemplate,
   BackupStore,
+  type BackupType,
   type Connection,
   createIndex,
   describeFailure,
 } from '../../engine/engine';
-import { aliasActionLines, type EditKind } from './edit-content';
+import { aliasActionLines, type EditKind, settingsDelta } from './edit-content';
 import { pushFailure, pushLine } from './output';
 import type { EditPreviewState, SessionDeps } from './session-types';
 
@@ -47,7 +49,7 @@ export function buildPreview(
   return {
     kind: target.kind,
     name: target.name,
-    payload,
+    payload: previewPayload(target, payload),
     title: TITLES[target.kind](target.name ?? ''),
     lines: previewLines(target, pretty, payload),
     backup: previewBackup(target),
@@ -55,8 +57,36 @@ export function buildPreview(
 }
 
 /**
- * Decides what the apply backs up: the overwritten document for templates and
- * policies, the alias table snapshot for alias actions.
+ * Decides what the apply sends: for index settings the changed keys only,
+ * because static settings cannot be sent back, the parsed edit otherwise.
+ *
+ * @param target - What the editor run worked on.
+ * @param payload - The parsed payload.
+ * @returns The payload the apply sends.
+ */
+function previewPayload(target: EditTarget, payload: unknown): unknown {
+  if (target.kind !== 'index-settings') {
+    return payload;
+  }
+  const base = JSON.parse(target.base ?? '{}') as Record<string, unknown>;
+  const edited =
+    typeof payload === 'object' && payload !== null && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)
+      : {};
+  return settingsDelta(base, edited);
+}
+
+/** The backup type per kind whose apply overwrites an existing document. */
+const BACKUP_TYPES: Partial<Record<EditKind, BackupType>> = {
+  template: 'template',
+  policy: 'policy',
+  cluster: 'cluster',
+  'index-settings': 'settings',
+};
+
+/**
+ * Decides what the apply backs up: the overwritten document, or the alias
+ * table snapshot for alias actions.
  *
  * @param target - What the editor run worked on.
  * @returns The backup, or undefined when nothing is overwritten.
@@ -65,17 +95,12 @@ function previewBackup(target: EditTarget): EditPreviewState['backup'] {
   if (target.kind === 'alias' && target.snapshot !== undefined) {
     return { type: 'alias', name: 'aliases', body: target.snapshot };
   }
-  if (target.kind === 'cluster' && target.base !== undefined) {
-    return { type: 'cluster', name: 'settings', body: target.base };
+  const type = BACKUP_TYPES[target.kind];
+  const name = target.kind === 'cluster' ? 'settings' : target.name;
+  if (type === undefined || name === undefined || target.base === undefined) {
+    return undefined;
   }
-  if (
-    (target.kind === 'template' || target.kind === 'policy') &&
-    target.base !== undefined &&
-    target.name !== undefined
-  ) {
-    return { type: target.kind, name: target.name, body: target.base };
-  }
-  return undefined;
+  return { type, name, body: target.base };
 }
 
 /** The confirmation title per kind. */
@@ -85,6 +110,7 @@ const TITLES: Record<EditKind, (name: string) => string> = {
   alias: () => 'Apply these alias actions?',
   index: (name) => `Create index "${name}"?`,
   cluster: () => 'Apply these cluster settings?',
+  'index-settings': (name) => `Save the settings of "${name}"?`,
 };
 
 /**
@@ -197,5 +223,8 @@ async function applyEdit(
     case 'cluster':
       await applyClusterSettings(connection, preview.payload);
       return '✔ Cluster settings applied.';
+    case 'index-settings':
+      await applyIndexSettings(connection, name, preview.payload);
+      return `✔ Settings of "${name}" saved.`;
   }
 }

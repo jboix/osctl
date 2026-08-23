@@ -50,14 +50,15 @@ osctl
 
 ## Commands
 
-| Family      | Commands                               |
-|-------------|----------------------------------------|
-| `/index`    | `ls`, `create`, `rm`, `rollover`       |
-| `/alias`    | `ls`, `apply`, `rm`                    |
-| `/template` | `ls`, `show`, `apply`, `rm`            |
-| `/policy`   | `ls`, `show`, `apply`, `rm`, `explain` |
-| `/cluster`  | `info`                                 |
-| `/profile`  | `add`, `ls`, `default`, `rm`           |
+| Family      | Commands                                                               |
+|-------------|------------------------------------------------------------------------|
+| `/index`    | `ls`, `create`, `rm`, `rollover`, `show`, `settings`, `settings apply` |
+| `/alias`    | `ls`, `apply`, `rm`                                                    |
+| `/template` | `ls`, `show`, `apply`, `rm`                                            |
+| `/policy`   | `ls`, `show`, `apply`, `rm`, `explain`                                 |
+| `/cluster`  | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
+| `/backup`   | `ls`, `show`, `apply`, `rm`                                            |
+| `/profile`  | `add`, `ls`, `default`, `rm`                                           |
 
 > [!TIP]
 > Listings and removals accept glob patterns: `/index ls core_*`.

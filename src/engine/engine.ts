@@ -5,6 +5,7 @@ export { applyClusterSettings } from './commands/cluster-settings';
 export { createIndex } from './commands/create-index';
 export { deleteAlias } from './commands/delete-alias';
 export { deleteIndices } from './commands/delete-indices';
+export { applyIndexSettings } from './commands/index-settings';
 export { applyPolicy, deletePolicy } from './commands/policies';
 export type { RolloverResult } from './commands/rollover';
 export { rollover } from './commands/rollover';
@@ -35,7 +36,7 @@ export {
 export type { Health } from './queries/health';
 export { health } from './queries/health';
 export type { IndexInfo } from './queries/indices';
-export { listIndices } from './queries/indices';
+export { getIndex, getIndexSettings, listIndices } from './queries/indices';
 export type {
   ExplainRow,
   PolicyDocument,

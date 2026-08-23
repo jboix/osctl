@@ -13,10 +13,21 @@ import { join } from 'node:path';
 import { compactStamp } from '../../utils/time';
 
 /** The resource kinds a backup can hold. */
-export type BackupType = 'template' | 'policy' | 'alias' | 'cluster';
+export type BackupType =
+  | 'template'
+  | 'policy'
+  | 'alias'
+  | 'cluster'
+  | 'settings';
 
 /** The backup types, used to validate directory names. */
-const BACKUP_TYPES: BackupType[] = ['template', 'policy', 'alias', 'cluster'];
+const BACKUP_TYPES: BackupType[] = [
+  'template',
+  'policy',
+  'alias',
+  'cluster',
+  'settings',
+];
 
 /** One backup on disk. */
 export interface BackupInfo {

@@ -45,10 +45,13 @@ export interface AddProfileState {
   error: string;
 }
 
+/** The resource kinds the document picker lists. */
+export type PickKind = 'template' | 'policy' | 'index' | 'index-settings';
+
 /** The picker of the editor flow: choose a document or start a new one. */
 export interface EditPickState {
   /** The picked resource kind. */
-  kind: 'template' | 'policy';
+  kind: PickKind;
   /** The existing document names. */
   names: string[];
   /** What picking a document does. Only `apply` offers the new entry. */
@@ -100,9 +103,9 @@ export type RemoveState =
 /** The actions the shell can trigger. */
 export interface SessionActions {
   /** Opens the editor for the named document, or the picker without a name. */
-  startEdit: (kind: 'template' | 'policy', name?: string) => void;
+  startEdit: (kind: PickKind, name?: string) => void;
   /** Prints the named document, or opens the picker without a name. */
-  startShow: (kind: 'template' | 'policy', name?: string) => void;
+  startShow: (kind: PickKind, name?: string) => void;
   /** Acts on the picked or newly named document. */
   pickEditTarget: (name: string, isNew: boolean) => void;
   /** Opens the editor over an alias actions skeleton. */
