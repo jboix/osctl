@@ -4,6 +4,7 @@ import { type DiffLine, diffLines } from 'inkstand';
 import {
   applyAliases,
   applyClusterSettings,
+  applyComponent,
   applyIndexSettings,
   applyPolicy,
   applyTemplate,
@@ -79,6 +80,7 @@ function previewPayload(target: EditTarget, payload: unknown): unknown {
 /** The backup type per kind whose apply overwrites an existing document. */
 const BACKUP_TYPES: Partial<Record<EditKind, BackupType>> = {
   template: 'template',
+  component: 'component',
   policy: 'policy',
   cluster: 'cluster',
   'index-settings': 'settings',
@@ -106,6 +108,7 @@ function previewBackup(target: EditTarget): EditPreviewState['backup'] {
 /** The confirmation title per kind. */
 const TITLES: Record<EditKind, (name: string) => string> = {
   template: (name) => `Save template "${name}"?`,
+  component: (name) => `Save component template "${name}"?`,
   policy: (name) => `Save policy "${name}"?`,
   alias: () => 'Apply these alias actions?',
   index: (name) => `Create index "${name}"?`,
@@ -209,6 +212,9 @@ async function applyEdit(
     case 'template':
       await applyTemplate(connection, name, preview.payload);
       return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
+    case 'component':
+      await applyComponent(connection, name, preview.payload);
+      return `✔ Component template "${name}" saved. Index templates pick it up on their next apply.`;
     case 'policy': {
       const outcome = await applyPolicy(connection, name, preview.payload);
       return `✔ Policy "${name}" ${outcome}.`;

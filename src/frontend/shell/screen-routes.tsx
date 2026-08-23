@@ -178,6 +178,7 @@ function RemoveRoute(props: { session: Session }): ReactElement {
 
 const NOUNS = {
   template: 'templates',
+  component: 'component templates',
   policy: 'policies',
   profile: 'profiles',
   backup: 'backups',
@@ -193,7 +194,7 @@ const NOUNS = {
  * @returns The removal screen element.
  */
 function NamedRemove(props: {
-  kind: 'template' | 'policy' | 'profile' | 'backup';
+  kind: 'template' | 'component' | 'policy' | 'profile' | 'backup';
   items: { label: string; value: string }[];
   session: Session;
 }): ReactElement {
@@ -246,6 +247,7 @@ function BackupPickRoute(props: { session: Session }): ReactElement {
 /** The picker title per pickable kind. */
 const PICK_TITLES = {
   template: 'Templates',
+  component: 'Component templates',
   policy: 'Policies',
   index: 'Indices',
   'index-settings': 'Indices',

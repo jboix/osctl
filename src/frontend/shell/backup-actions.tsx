@@ -155,7 +155,11 @@ async function applyBackup(
     pushLine(deps, 'Not connected. Run /profile add.', 'yellow');
     return;
   }
-  if (backup.type !== 'template' && backup.type !== 'policy') {
+  if (
+    backup.type !== 'template' &&
+    backup.type !== 'component' &&
+    backup.type !== 'policy'
+  ) {
     pushLine(deps, REFERENCE_ONLY[backup.type], 'yellow');
     return;
   }
@@ -184,7 +188,7 @@ async function applyBackup(
  * @returns The preview the /edit/preview screen confirms.
  */
 function restorePreview(
-  type: 'template' | 'policy',
+  type: 'template' | 'component' | 'policy',
   backup: BackupInfo,
   body: string,
   base: string | undefined,

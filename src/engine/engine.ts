@@ -2,6 +2,10 @@
 
 export { applyAliases } from './commands/apply-aliases';
 export { applyClusterSettings } from './commands/cluster-settings';
+export {
+  applyComponent,
+  deleteComponent,
+} from './commands/component-templates';
 export { createIndex } from './commands/create-index';
 export { deleteAlias } from './commands/delete-alias';
 export { deleteIndices } from './commands/delete-indices';
@@ -33,6 +37,8 @@ export {
   explainAllocation,
   listNodes,
 } from './queries/cluster';
+export type { ComponentInfo } from './queries/component-templates';
+export { getComponent, listComponents } from './queries/component-templates';
 export type { Health } from './queries/health';
 export { health } from './queries/health';
 export type { IndexInfo } from './queries/indices';

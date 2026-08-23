@@ -55,6 +55,7 @@ osctl
 | `/index`    | `ls`, `create`, `rm`, `rollover`, `show`, `settings`, `settings apply` |
 | `/alias`    | `ls`, `apply`, `rm`                                                    |
 | `/template` | `ls`, `show`, `apply`, `rm`                                            |
+| `/component`| `ls`, `show`, `apply`, `rm`                                            |
 | `/policy`   | `ls`, `show`, `apply`, `rm`, `explain`                                 |
 | `/cluster`  | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
 | `/backup`   | `ls`, `show`, `apply`, `rm`                                            |
