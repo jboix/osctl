@@ -52,6 +52,9 @@ export function CommandInput(props: { session: Session }): ReactElement {
   );
 }
 
+/** The suggestion rows shown at once. Hidden rows are counted around them. */
+const SUGGESTION_ROWS = 8;
+
 /**
  * Renders the suggestion list with its key hint.
  *
@@ -74,6 +77,7 @@ function Suggestions(props: {
         commands={props.hits}
         dim
         focused={props.focused}
+        maxRows={SUGGESTION_ROWS}
         onBlur={props.onBlur}
         onPick={props.onPick}
       />
