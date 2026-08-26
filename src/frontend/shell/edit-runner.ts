@@ -4,7 +4,7 @@ import { type EditorResult, editText } from 'inkstand';
 import { editHeaderLines } from './edit-content';
 import { buildPreview, type EditTarget } from './edit-preview';
 import { type JsoncResult, parseJsonc } from './jsonc';
-import { pushLine } from './output';
+import { pushLine, pushNotice } from './output';
 import type { SessionDeps } from './session-types';
 
 /**
@@ -40,12 +40,18 @@ export async function runEditor(
         .join('\n'),
       extension: 'jsonc',
     },
-    { suspend: deps.suspend, redraw: deps.redraw },
+    // Ink repaints the whole frame when it reclaims the alternate screen, so
+    // the redraw callback has nothing left to do.
+    { suspend: deps.suspend, redraw: () => undefined },
   );
   const parsed = parseJsonc(result.text);
   const abort = abortLine(result, parsed);
   if (abort !== undefined) {
-    pushLine(deps, abort.text, abort.tone);
+    if (abort.tone === 'warn') {
+      pushNotice(deps, 'warn', abort.text);
+    } else {
+      pushLine(deps, abort.text, 'dim');
+    }
     closeEdit(deps);
     return;
   }
@@ -65,9 +71,9 @@ export async function runEditor(
 function abortLine(
   result: EditorResult,
   parsed: JsoncResult,
-): { text: string; tone: 'yellow' | 'dim' } | undefined {
+): { text: string; tone: 'warn' | 'dim' } | undefined {
   if (result.error !== undefined) {
-    return { text: result.error, tone: 'yellow' };
+    return { text: result.error, tone: 'warn' };
   }
   if (!result.changed) {
     return { text: 'Edit aborted: the file was not changed.', tone: 'dim' };
@@ -78,7 +84,7 @@ function abortLine(
   if (parsed.kind === 'error') {
     return {
       text: `${parsed.message} Nothing applied. Your edit is kept at ${result.path}.`,
-      tone: 'yellow',
+      tone: 'warn',
     };
   }
   return undefined;

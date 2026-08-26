@@ -13,7 +13,7 @@ import {
   ProfileStore,
 } from '../../engine/engine';
 import { backupStore } from './backup-actions';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushNotice } from './output';
 import type { RemoveState, SessionActions, SessionDeps } from './session-types';
 
 /**
@@ -98,7 +98,7 @@ async function removeSnapshots(
   for (const name of names) {
     try {
       await deleteSnapshot(connection, repo, name);
-      pushLine(deps, `✔ Snapshot "${repo}/${name}" deleted.`, 'green');
+      pushNotice(deps, 'success', `Snapshot "${repo}/${name}" deleted.`);
     } catch (error) {
       pushFailure(deps, describeFailure(error));
     }
@@ -121,7 +121,7 @@ async function cancelTasks(
   for (const id of ids) {
     try {
       await cancelTask(connection, id);
-      pushLine(deps, `✔ Cancel of task ${id} requested.`, 'green');
+      pushNotice(deps, 'success', `Cancel of task ${id} requested.`);
     } catch (error) {
       pushFailure(deps, describeFailure(error));
     }
@@ -139,9 +139,9 @@ function removeProfiles(names: string[], deps: SessionDeps): void {
   const store = new ProfileStore();
   for (const name of names) {
     if (store.remove(name)) {
-      pushLine(deps, `✔ Profile "${name}" deleted.`, 'green');
+      pushNotice(deps, 'success', `Profile "${name}" deleted.`);
     } else {
-      pushLine(deps, `No profile named "${name}".`, 'yellow');
+      pushNotice(deps, 'warn', `No profile named "${name}".`);
     }
   }
 }
@@ -156,14 +156,14 @@ function removeProfiles(names: string[], deps: SessionDeps): void {
 function removeBackups(ids: string[], deps: SessionDeps): void {
   const store = backupStore(deps);
   if (store === undefined) {
-    pushLine(deps, 'No profile selected. Run /profile add.', 'yellow');
+    pushNotice(deps, 'warn', 'No profile selected. Run /profile add.');
     return;
   }
   for (const id of ids) {
     if (store.remove(id)) {
-      pushLine(deps, `✔ Backup deleted: ${id}.`, 'green');
+      pushNotice(deps, 'success', `Backup deleted: ${id}.`);
     } else {
-      pushLine(deps, `No backup ${id}.`, 'yellow');
+      pushNotice(deps, 'warn', `No backup ${id}.`);
     }
   }
 }
@@ -189,10 +189,10 @@ async function finishRemove(
   if (state.kind === 'index') {
     try {
       await deleteIndices(connection, names);
-      pushLine(
+      pushNotice(
         deps,
-        `✔ Deleted ${names.length} ${names.length === 1 ? 'index' : 'indices'}: ${names.join(', ')}.`,
-        'green',
+        'success',
+        `Deleted ${names.length} ${names.length === 1 ? 'index' : 'indices'}: ${names.join(', ')}.`,
       );
     } catch (error) {
       pushFailure(deps, describeFailure(error));
@@ -220,7 +220,7 @@ async function removeEach(
   for (const name of names) {
     try {
       const detail = await removeOne(kind, name, connection);
-      pushLine(deps, `✔ ${detail}`, 'green');
+      pushNotice(deps, 'success', detail);
     } catch (error) {
       pushFailure(deps, describeFailure(error));
     }

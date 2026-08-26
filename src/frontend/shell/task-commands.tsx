@@ -1,15 +1,15 @@
 // The /task command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import {
   describeFailure,
   getTask,
   listTasks,
   type TaskInfo,
 } from '../../engine/engine';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushLine, pushNotice } from './output';
 
 /**
  * Lists the running tasks as a table block, longest running first.
@@ -31,7 +31,7 @@ export async function runTaskLs(context: CommandContext): Promise<void> {
     const table = taskTable(tasks);
     context.session.push(<Table {...table} />, {
       label: 'the task list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -81,13 +81,13 @@ export async function runTaskShow(
     return;
   }
   if (id === undefined) {
-    pushLine(context.session, 'Usage: /task show <id>.', 'yellow');
+    pushNotice(context.session, 'warn', 'Usage: /task show <id>.');
     return;
   }
   try {
     const task = await getTask(connection, id);
     if (task === undefined) {
-      pushLine(context.session, `No task "${id}".`, 'yellow');
+      pushNotice(context.session, 'warn', `No task "${id}".`);
       return;
     }
     context.session.showDoc(`task "${id}"`, JSON.stringify(task, null, 2));

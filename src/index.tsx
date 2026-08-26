@@ -1,17 +1,18 @@
 // osctl entry point.
 
 import { render } from 'ink';
+import { createMouseInput } from 'inkstand';
 import { MemoryRouter } from 'react-router';
 import { Shell } from './frontend/shell/shell';
 
-// Clear the visible screen and home the cursor so the app starts on a clean
-// viewport. Not `3J`: the terminal scrollback stays intact.
-process.stdout.write('\u001B[2J\u001B[H');
+// The mouse reports go to the shell; Ink reads the key input only.
+const mouse = createMouseInput(process.stdin);
 
+// The app owns the alternate screen; the terminal content returns on exit.
 // The line editor owns ctrl+c: it clears the line, and quits on an empty one.
 render(
   <MemoryRouter>
-    <Shell />
+    <Shell mouse={mouse} />
   </MemoryRouter>,
-  { exitOnCtrlC: false },
+  { alternateScreen: true, exitOnCtrlC: false, stdin: mouse.stdin },
 );

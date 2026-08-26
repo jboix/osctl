@@ -1,13 +1,13 @@
 // The /backup command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import type { BackupInfo, BackupStore } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
 import { readableStamp } from '../../utils/time';
-import { Table, type TableProps, tableLines } from '../components/table';
 import { backupLabel, backupStore } from './backup-actions';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
-import { pushLine } from './output';
+import { pushLine, pushNotice } from './output';
 
 /**
  * Returns the backup store of the session profile, reporting when there is
@@ -19,10 +19,10 @@ import { pushLine } from './output';
 function requireStore(context: CommandContext): BackupStore | undefined {
   const store = backupStore(context.session);
   if (store === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'No profile selected. Run /profile add.',
-      'yellow',
     );
   }
   return store;
@@ -57,7 +57,7 @@ export function runBackupLs(context: CommandContext, pattern?: string): void {
   };
   context.session.push(<Table {...table} />, {
     label: 'the backup list',
-    text: tableLines(table).join('\n'),
+    text: tableText(table),
   });
 }
 

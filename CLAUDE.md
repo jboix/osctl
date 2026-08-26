@@ -52,6 +52,8 @@ major.
 ## Design invariants
 
 - osctl is interactive only. There is no non-interactive command mode.
+- osctl runs on the alternate screen and owns its transcript. Output is never printed to
+  the terminal scrollback.
 - Commands follow the noun-verb form (`/index ls`, `/alias apply`).
 - Configuration is saved profiles only (`~/.config/osctl/config.json`). Passwords are never
   written to disk.

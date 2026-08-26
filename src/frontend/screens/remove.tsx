@@ -1,7 +1,7 @@
 // The removal skeleton: select the rows, review the plan, confirm.
 
-import { Box, Text, useInput } from 'ink';
-import { MultiSelect, Select } from 'inkstand';
+import { Box, useInput } from 'ink';
+import { MultiSelect, Pane, Select } from 'inkstand';
 import type { ReactElement, ReactNode } from 'react';
 import { useState } from 'react';
 
@@ -35,13 +35,12 @@ export function RemoveScreen(props: RemoveScreenProps): ReactElement {
     }
   });
   return (
-    <Box
-      borderColor="red"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
+    <Pane
+      detail="esc, q, or ctrl+c to cancel"
+      focusColor="red"
+      focused
+      title={props.title}
     >
-      <Text color="red">{props.title} (esc, q, or ctrl+c to cancel)</Text>
       {chosen === undefined ? (
         <MultiSelect
           items={props.items}
@@ -52,7 +51,7 @@ export function RemoveScreen(props: RemoveScreenProps): ReactElement {
       ) : (
         <Confirm chosen={chosen} {...props} />
       )}
-    </Box>
+    </Pane>
   );
 }
 

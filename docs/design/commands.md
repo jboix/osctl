@@ -128,3 +128,19 @@ Every change that overwrites existing documents is backed up, that includes: `/t
 | `/help`                   | Show the available commands                                  |
 | `/version`                | Print the osctl version                                      |
 | `/exit`                   | Quit osctl                                                   |
+
+## screen
+
+osctl runs on the terminal's alternate screen. The transcript of past output fills the
+space above the input area and the status bar, and the terminal content returns on exit.
+New output does not move a transcript scrolled away from the end; a line under the
+transcript counts the lines below. The command suggestions open above the input line, so
+the line keeps its place on screen. osctl reads the mouse, so the terminal's own text
+selection needs shift held.
+
+| Key                | Effect                                                 |
+|--------------------|--------------------------------------------------------|
+| page up, page down | Move the transcript one screen                         |
+| mouse wheel        | Move the transcript three lines                        |
+| ctrl+end           | Return the transcript to the end and follow new output |
+| ctrl+o             | Fold or expand every shown document                    |

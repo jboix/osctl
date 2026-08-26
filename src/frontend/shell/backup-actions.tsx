@@ -8,7 +8,7 @@ import {
   describeFailure,
 } from '../../engine/engine';
 import { readableStamp } from '../../utils/time';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushNotice } from './output';
 import { currentDocument } from './pick-kinds';
 import type {
   EditPreviewState,
@@ -118,7 +118,7 @@ function dispatchPick(id: string, deps: SessionDeps): void {
 function showBackup(backup: BackupInfo, deps: SessionDeps): void {
   const body = backupStore(deps)?.read(backup.id);
   if (body === undefined) {
-    pushLine(deps, `Backup not found: ${backup.id}.`, 'yellow');
+    pushNotice(deps, 'warn', `Backup not found: ${backup.id}.`);
     return;
   }
   deps.showDoc(
@@ -152,7 +152,7 @@ async function applyBackup(
 ): Promise<void> {
   const connection = deps.connection;
   if (connection === undefined) {
-    pushLine(deps, 'Not connected. Run /profile add.', 'yellow');
+    pushNotice(deps, 'warn', 'Not connected. Run /profile add.');
     return;
   }
   if (
@@ -160,12 +160,12 @@ async function applyBackup(
     backup.type !== 'component' &&
     backup.type !== 'policy'
   ) {
-    pushLine(deps, REFERENCE_ONLY[backup.type], 'yellow');
+    pushNotice(deps, 'warn', REFERENCE_ONLY[backup.type]);
     return;
   }
   const body = backupStore(deps)?.read(backup.id);
   if (body === undefined) {
-    pushLine(deps, `Backup not found: ${backup.id}.`, 'yellow');
+    pushNotice(deps, 'warn', `Backup not found: ${backup.id}.`);
     return;
   }
   try {

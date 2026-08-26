@@ -1,5 +1,6 @@
 // The /index command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import {
   type Connection,
   createIndex,
@@ -8,10 +9,9 @@ import {
   listIndices,
   rollover,
 } from '../../engine/engine';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushLine, pushNotice } from './output';
 
 /**
  * Lists the indices and renders them as a table block.
@@ -37,7 +37,7 @@ export async function runIndexLs(
     const table = indexTable(indices);
     context.session.push(<Table {...table} />, {
       label: 'the index list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -130,18 +130,18 @@ export async function runIndexCreate(
     return;
   }
   if (name === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'Usage: /index create <name> [write-alias].',
-      'yellow',
     );
     return;
   }
   if (!/-\d{6}$/.test(name)) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'The name has no numeric suffix like -000001: rollover will not work.',
-      'yellow',
     );
   }
   if (writeAlias === undefined) {
@@ -170,10 +170,10 @@ async function createWithAlias(
     await createIndex(connection, name, {
       aliases: { [writeAlias]: { is_write_index: true } },
     });
-    pushLine(
+    pushNotice(
       context.session,
-      `✔ Index "${name}" created with write alias "${writeAlias}".`,
-      'green',
+      'success',
+      `Index "${name}" created with write alias "${writeAlias}".`,
     );
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -196,15 +196,15 @@ export async function runIndexRollover(
     return;
   }
   if (alias === undefined) {
-    pushLine(context.session, 'Usage: /index rollover <alias>.', 'yellow');
+    pushNotice(context.session, 'warn', 'Usage: /index rollover <alias>.');
     return;
   }
   try {
     const result = await rollover(connection, alias);
-    pushLine(
+    pushNotice(
       context.session,
-      `✔ Rolled over ${alias}: ${result.oldIndex} → ${result.newIndex}.`,
-      'green',
+      'success',
+      `Rolled over ${alias}: ${result.oldIndex} → ${result.newIndex}.`,
     );
     if (result.reapplied.length === 0) {
       pushLine(context.session, 'No aliases to reapply.', 'dim');

@@ -18,7 +18,7 @@ import {
   restoreSnapshot,
 } from '../../engine/engine';
 import { aliasActionLines, type EditKind, settingsDelta } from './edit-content';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushNotice } from './output';
 import type { EditPreviewState, SessionDeps } from './session-types';
 
 /** What one editor run works on. */
@@ -171,7 +171,7 @@ export async function finish(
     return;
   }
   try {
-    pushLine(deps, await applyEdit(preview, connection), 'green');
+    pushNotice(deps, 'success', await applyEdit(preview, connection));
   } catch (error) {
     pushFailure(deps, describeFailure(error));
   }
@@ -199,10 +199,10 @@ function writeBackup(
     store.save(preview.backup.type, preview.backup.name, preview.backup.body);
     return true;
   } catch (error) {
-    pushLine(
+    pushNotice(
       deps,
+      'warn',
       `Backup failed: ${(error as Error).message}. Nothing applied.`,
-      'yellow',
     );
     return false;
   }
@@ -227,17 +227,17 @@ async function applyEdit(
       return applyDocumentEdit(preview, connection);
     case 'alias': {
       const count = await applyAliases(connection, preview.payload);
-      return `✔ Applied ${count} alias action${count === 1 ? '' : 's'}.`;
+      return `Applied ${count} alias action${count === 1 ? '' : 's'}.`;
     }
     case 'index':
       await createIndex(connection, name, preview.payload);
-      return `✔ Index "${name}" created.`;
+      return `Index "${name}" created.`;
     case 'cluster':
       await applyClusterSettings(connection, preview.payload);
-      return '✔ Cluster settings applied.';
+      return 'Cluster settings applied.';
     case 'index-settings':
       await applyIndexSettings(connection, name, preview.payload);
-      return `✔ Settings of "${name}" saved.`;
+      return `Settings of "${name}" saved.`;
     case 'snapshot':
     case 'restore':
     case 'reindex':
@@ -259,14 +259,14 @@ async function applyDocumentEdit(
   const name = preview.name ?? '';
   if (preview.kind === 'template') {
     await applyTemplate(connection, name, preview.payload);
-    return `✔ Template "${name}" saved. Existing indices keep their settings until a rollover.`;
+    return `Template "${name}" saved. Existing indices keep their settings until a rollover.`;
   }
   if (preview.kind === 'component') {
     await applyComponent(connection, name, preview.payload);
-    return `✔ Component template "${name}" saved. Index templates pick it up on their next apply.`;
+    return `Component template "${name}" saved. Index templates pick it up on their next apply.`;
   }
   const outcome = await applyPolicy(connection, name, preview.payload);
-  return `✔ Policy "${name}" ${outcome}.`;
+  return `Policy "${name}" ${outcome}.`;
 }
 
 /**
@@ -284,12 +284,12 @@ async function applyBackgroundEdit(
   const name = preview.name ?? '';
   if (preview.kind === 'snapshot') {
     await createSnapshot(connection, repo, name, preview.payload);
-    return `✔ Snapshot "${repo}/${name}" started. Watch it with /snapshot ls.`;
+    return `Snapshot "${repo}/${name}" started. Watch it with /snapshot ls.`;
   }
   if (preview.kind === 'restore') {
     await restoreSnapshot(connection, repo, name, preview.payload);
-    return `✔ Restore of "${repo}/${name}" started.`;
+    return `Restore of "${repo}/${name}" started.`;
   }
   const task = await reindex(connection, preview.payload);
-  return `✔ Reindex started as task ${task}. Watch it with /task show ${task}.`;
+  return `Reindex started as task ${task}. Watch it with /task show ${task}.`;
 }

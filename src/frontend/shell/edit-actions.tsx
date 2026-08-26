@@ -11,7 +11,7 @@ import { matchesPattern } from '../../utils/pattern';
 import { aliasReferenceLines, editSkeleton } from './edit-content';
 import { finish } from './edit-preview';
 import { closeEdit, runEditor } from './edit-runner';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushLine, pushNotice } from './output';
 import {
   currentDocument,
   DOC_TITLES,
@@ -157,7 +157,7 @@ async function resolvePattern(
     );
     const [first] = names;
     if (first === undefined) {
-      pushLine(deps, `No ${NOUNS[kind]} matches "${pattern}".`, 'yellow');
+      pushNotice(deps, 'warn', `No ${NOUNS[kind]} matches "${pattern}".`);
       return;
     }
     if (names.length === 1) {
@@ -246,7 +246,7 @@ async function showDocument(
   try {
     const document = await currentDocument(kind, name, connection);
     if (document === undefined) {
-      pushLine(deps, `No ${NOUNS[kind]} named "${name}".`, 'yellow');
+      pushNotice(deps, 'warn', `No ${NOUNS[kind]} named "${name}".`);
       return;
     }
     deps.showDoc(
@@ -286,7 +286,7 @@ async function openDocument(
       ? undefined
       : await currentDocument(kind, name, connection);
     if (!isNew && current === undefined) {
-      pushLine(deps, `No ${NOUNS[kind]} named "${name}".`, 'yellow');
+      pushNotice(deps, 'warn', `No ${NOUNS[kind]} named "${name}".`);
       closeEdit(deps);
       return;
     }
@@ -346,7 +346,7 @@ async function openIndexSettingsEditor(
   try {
     const settings = await getIndexSettings(connection, name);
     if (settings === undefined) {
-      pushLine(deps, `No index named "${name}".`, 'yellow');
+      pushNotice(deps, 'warn', `No index named "${name}".`);
       closeEdit(deps);
       return;
     }

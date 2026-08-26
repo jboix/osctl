@@ -1,7 +1,7 @@
 // The /profile add wizard UI: renders the machine's questions.
 
 import { Box, Text, useInput } from 'ink';
-import { Select, TextPrompt } from 'inkstand';
+import { Notice, Pane, Select, TextPrompt } from 'inkstand';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import {
@@ -46,21 +46,17 @@ export function ProfileAddWizard(props: ProfileAddWizardProps): ReactElement {
     setMachine(next);
   };
   return (
-    <Box
-      borderColor="cyan"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
-    >
-      <Text color="cyan">Connect to a cluster (esc or ctrl+c to cancel)</Text>
-      {props.error !== undefined && <Text color="red">✖ {props.error}</Text>}
+    <Pane detail="esc or ctrl+c to cancel" focused title="Connect to a cluster">
+      {props.error !== undefined && (
+        <Notice message={props.error} tone="error" />
+      )}
       <QuestionView
         key={machine.step}
         onAnswer={answer}
         onCancel={props.onCancel}
         question={machine.question}
       />
-    </Box>
+    </Pane>
   );
 }
 

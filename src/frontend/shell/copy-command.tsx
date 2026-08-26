@@ -1,7 +1,6 @@
 // The /copy command runner.
 
-import { Text } from 'ink';
-import { copyToClipboard } from 'inkstand';
+import { copyToClipboard, Notice } from 'inkstand';
 import type { CommandContext } from './command-types';
 import { pushLine } from './output';
 
@@ -20,7 +19,7 @@ export function runCopy(context: CommandContext): void {
   }
   copyToClipboard(copy.text);
   context.session.push(
-    <Text color="green">✔ Copied {copy.label} to clipboard.</Text>,
+    <Notice message={`Copied ${copy.label} to clipboard.`} tone="success" />,
     'keep',
   );
 }

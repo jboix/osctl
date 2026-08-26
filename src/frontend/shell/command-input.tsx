@@ -1,12 +1,7 @@
 // The command input: the line editor, the suggestions, and the router.
 
-import { Box, type Key, Text, useApp, useInput } from 'ink';
-import {
-  type CommandInfo,
-  CommandList,
-  type LineEditor,
-  Prompt,
-} from 'inkstand';
+import { Box, Text, useApp, useInput } from 'ink';
+import { type CommandInfo, CommandList, Prompt, useLineEditor } from 'inkstand';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -15,6 +10,9 @@ import type { Session } from './session';
 
 /**
  * Renders the command input box, its suggestions, and routes submitted lines.
+ * Ctrl+o folds or expands the shown documents and tab moves the focus into
+ * the suggestion list; the focused list reads its own keys through
+ * `CommandList`, so the editor pauses while it is focused.
  *
  * @param props - The component props.
  * @param props.session - The running session.
@@ -23,23 +21,23 @@ import type { Session } from './session';
 export function CommandInput(props: { session: Session }): ReactElement {
   const { exit } = useApp();
   const navigate = useNavigate();
-  const { editor, setEditor } = props.session;
+  const context: CommandContext = { session: props.session, exit, navigate };
   const [focused, setFocused] = useState(false);
+  const { editor, setEditor } = useLineEditor(
+    { onSubmit: (line) => runLine(line, context), onInterrupt: exit },
+    { isActive: !focused },
+  );
   const hits = suggest(editor.value);
   const listFocused = focused && hits.length > 0;
-  useInput((input, key) =>
-    handleKeystroke(input, key, {
-      context: { session: props.session, exit, navigate },
-      editor,
-      setEditor,
-      focused: listFocused,
-      setFocused,
-      hits,
-    }),
-  );
+  useInput((input, key) => {
+    if (key.ctrl && input === 'o') {
+      props.session.toggleDocs();
+    } else if (key.tab && !listFocused) {
+      setFocused(hits.length > 0);
+    }
+  });
   return (
     <Box flexDirection="column">
-      <Prompt cursor={editor.cursor} value={editor.value} />
       {hits.length > 0 && (listFocused || editor.value !== '') && (
         <Suggestions
           focused={listFocused}
@@ -48,6 +46,7 @@ export function CommandInput(props: { session: Session }): ReactElement {
           onPick={(command) => setEditor(editor.withValue(`${command.name} `))}
         />
       )}
+      <Prompt cursor={editor.cursor} value={editor.value} />
     </Box>
   );
 }
@@ -90,75 +89,6 @@ function Suggestions(props: {
       </Box>
     </Box>
   );
-}
-
-/** What the keystroke handler drives. */
-interface KeystrokeDeps {
-  /** What the commands act on. */
-  context: CommandContext;
-  /** The current editor state. */
-  editor: LineEditor;
-  /** Replaces the editor state. */
-  setEditor: (editor: LineEditor) => void;
-  /** Whether the suggestion list has the focus. */
-  focused: boolean;
-  /** Sets the focus flag. */
-  setFocused: (focused: boolean) => void;
-  /** The commands matching the current input. */
-  hits: Command[];
-}
-
-/**
- * Applies one keystroke: ctrl+o folds or expands the shown documents, tab
- * moves the focus into the suggestion list, and the rest goes to the editor.
- * The focused list reads its own keys through `CommandList`.
- *
- * @param input - The printable characters of the keystroke.
- * @param key - The special-key flags.
- * @param deps - The editor, the focus flag, and the command context.
- * @returns Nothing.
- */
-function handleKeystroke(input: string, key: Key, deps: KeystrokeDeps): void {
-  if (key.ctrl && input === 'o') {
-    deps.context.session.toggleDocs();
-    return;
-  }
-  if (key.tab) {
-    if (!deps.focused) {
-      deps.setFocused(deps.hits.length > 0);
-    }
-    return;
-  }
-  if (
-    deps.focused &&
-    (key.upArrow || key.downArrow || key.return || key.escape)
-  ) {
-    return;
-  }
-  applyEditorKey(input, key, deps);
-}
-
-/**
- * Applies the keystroke to the editor and runs a submitted line.
- *
- * @param input - The printable characters of the keystroke.
- * @param key - The special-key flags.
- * @param deps - The editor, the focus flag, and the command context.
- * @returns Nothing.
- */
-function applyEditorKey(input: string, key: Key, deps: KeystrokeDeps): void {
-  const next = deps.editor.key(input, key);
-  if (next.interrupted) {
-    deps.context.exit();
-    return;
-  }
-  const line = next.submitted?.trim() ?? '';
-  if (next.submitted === undefined || line === '') {
-    deps.setEditor(next);
-    return;
-  }
-  deps.setEditor(next.remember(line));
-  runLine(line, deps.context);
 }
 
 /**

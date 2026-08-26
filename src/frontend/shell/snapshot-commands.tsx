@@ -1,5 +1,6 @@
 // The /snapshot command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import {
   describeFailure,
   getSnapshot,
@@ -8,10 +9,9 @@ import {
   type SnapshotInfo,
 } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushLine, pushNotice } from './output';
 
 /**
  * Lists the snapshot repositories as a table block.
@@ -41,7 +41,7 @@ export async function runSnapshotRepoLs(
     };
     context.session.push(<Table {...table} />, {
       label: 'the repository list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -72,7 +72,7 @@ export async function runSnapshotLs(
     const table = snapshotTable(snapshots);
     context.session.push(<Table {...table} />, {
       label: 'the snapshot list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -126,13 +126,13 @@ export async function runSnapshotShow(
     return;
   }
   if (repo === undefined || name === undefined) {
-    pushLine(context.session, 'Usage: /snapshot show <repo> <name>.', 'yellow');
+    pushNotice(context.session, 'warn', 'Usage: /snapshot show <repo> <name>.');
     return;
   }
   try {
     const snapshot = await getSnapshot(connection, repo, name);
     if (snapshot === undefined) {
-      pushLine(context.session, `No snapshot "${repo}/${name}".`, 'yellow');
+      pushNotice(context.session, 'warn', `No snapshot "${repo}/${name}".`);
       return;
     }
     context.session.showDoc(
@@ -161,10 +161,10 @@ export function runSnapshotCreate(
     return;
   }
   if (repo === undefined || name === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'Usage: /snapshot create <repo> <name>.',
-      'yellow',
     );
     return;
   }
@@ -188,10 +188,10 @@ export function runSnapshotRestore(
     return;
   }
   if (repo === undefined || name === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'Usage: /snapshot restore <repo> <name>.',
-      'yellow',
     );
     return;
   }
@@ -216,10 +216,10 @@ export async function runSnapshotRm(
     return;
   }
   if (repo === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       'Usage: /snapshot rm <repo> [pattern].',
-      'yellow',
     );
     return;
   }

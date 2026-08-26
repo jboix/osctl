@@ -2,7 +2,7 @@
 
 import type { Connection } from '../../engine/engine';
 import type { CommandContext } from './command-types';
-import { pushLine } from './output';
+import { pushNotice } from './output';
 
 /**
  * Returns the live connection, reporting when there is none.
@@ -15,7 +15,7 @@ export function requireConnection(
 ): Connection | undefined {
   const connection = context.session.connection;
   if (connection === undefined) {
-    pushLine(context.session, 'Not connected. Run /profile add.', 'yellow');
+    pushNotice(context.session, 'warn', 'Not connected. Run /profile add.');
   }
   return connection;
 }

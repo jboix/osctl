@@ -1,6 +1,7 @@
 // The /cluster command runners.
 
 import { Box, Text } from 'ink';
+import { Table, type TableProps, tableText } from 'inkstand';
 import type { ReactElement } from 'react';
 import {
   type AllocationExplanation,
@@ -13,7 +14,6 @@ import {
   type NodeDecision,
   type NodeInfo,
 } from '../../engine/engine';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
 import { pushFailure, pushLine } from './output';
@@ -79,7 +79,7 @@ export async function runClusterNodes(context: CommandContext): Promise<void> {
     const table = nodeTable(await listNodes(connection));
     context.session.push(<Table {...table} />, {
       label: 'the node list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));

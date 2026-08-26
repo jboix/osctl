@@ -3,7 +3,7 @@
 import { ProfileStore } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
 import type { CommandContext } from './command-types';
-import { pushLine } from './output';
+import { pushLine, pushNotice } from './output';
 
 /**
  * Sets the default profile, interactively when no name is given.
@@ -23,10 +23,10 @@ export function runProfileDefault(
   }
   const profile = new ProfileStore().setDefault(name);
   if (profile === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       `No profile named "${name}". Run /profile ls.`,
-      'yellow',
     );
     return;
   }

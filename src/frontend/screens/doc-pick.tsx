@@ -1,7 +1,7 @@
 // A document picker: choose an existing name or enter a new one.
 
-import { Box, Text, useInput } from 'ink';
-import { Select, TextPrompt } from 'inkstand';
+import { useInput } from 'ink';
+import { Pane, Select, TextPrompt } from 'inkstand';
 import { type ReactElement, useState } from 'react';
 
 /** The list value of the new document entry. Names cannot contain it. */
@@ -41,19 +41,13 @@ export function DocPick(props: DocPickProps): ReactElement {
     }
   });
   return (
-    <Box
-      borderColor="cyan"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
-    >
-      <Text color="cyan">{props.title} (esc or ctrl+c to cancel)</Text>
+    <Pane detail="esc or ctrl+c to cancel" focused title={props.title}>
       {naming ? (
         <NameEntry {...props} />
       ) : (
         <NameSelect {...props} onNew={() => setNaming(true)} />
       )}
-    </Box>
+    </Pane>
   );
 }
 

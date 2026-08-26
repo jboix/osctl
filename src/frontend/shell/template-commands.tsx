@@ -1,8 +1,8 @@
 // The /template command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import { describeFailure, listTemplates } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
 import { pushFailure, pushLine } from './output';
@@ -46,7 +46,7 @@ export async function runTemplateLs(
     };
     context.session.push(<Table {...table} />, {
       label: 'the template list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));

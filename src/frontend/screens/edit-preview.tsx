@@ -1,7 +1,7 @@
 // The edit preview: shows the pending change and asks for confirmation.
 
-import { Box, Text, useInput } from 'ink';
-import { type DiffLine, DiffView, Select } from 'inkstand';
+import { Box, useInput } from 'ink';
+import { type DiffLine, DiffView, Pane, Select } from 'inkstand';
 import type { ReactElement } from 'react';
 
 /** The edit preview contract. */
@@ -29,13 +29,7 @@ export function EditPreview(props: EditPreviewProps): ReactElement {
     }
   });
   return (
-    <Box
-      borderColor="cyan"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
-    >
-      <Text color="cyan">{props.title} (esc, q, or ctrl+c to cancel)</Text>
+    <Pane detail="esc, q, or ctrl+c to cancel" focused title={props.title}>
       <Box flexDirection="column" marginBottom={1}>
         <DiffView lines={props.lines} />
       </Box>
@@ -48,6 +42,6 @@ export function EditPreview(props: EditPreviewProps): ReactElement {
           confirmed ? props.onConfirm() : props.onCancel()
         }
       />
-    </Box>
+    </Pane>
   );
 }

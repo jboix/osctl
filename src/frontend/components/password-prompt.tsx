@@ -1,7 +1,6 @@
 // The masked password prompt shown when a profile requires basic auth.
 
-import { Box, Text } from 'ink';
-import { TextPrompt } from 'inkstand';
+import { Pane, TextPrompt } from 'inkstand';
 import type { ReactElement } from 'react';
 
 /** The password prompt contract. */
@@ -24,21 +23,18 @@ export interface PasswordPromptProps {
  */
 export function PasswordPrompt(props: PasswordPromptProps): ReactElement {
   return (
-    <Box
-      borderColor="yellow"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
+    <Pane
+      detail="esc or ctrl+c to cancel"
+      focusColor="yellow"
+      focused
+      title={`Password for ${props.username} @ ${props.host}`}
     >
-      <Text>
-        Password for {props.username} @ {props.host} (esc or ctrl+c to cancel)
-      </Text>
       <TextPrompt
         label="Password"
         mask="•"
         onCancel={props.onCancel}
         onSubmit={props.onSubmit}
       />
-    </Box>
+    </Pane>
   );
 }

@@ -1,7 +1,7 @@
 // The session contracts: state, actions, and their dependencies.
 
 import type { SuspendTerminal } from 'ink';
-import type { DiffLine, LineEditor } from 'inkstand';
+import type { DiffLine, OutputItem } from 'inkstand';
 import type { ReactNode } from 'react';
 import type {
   AliasInfo,
@@ -14,14 +14,6 @@ import type {
 import type { StatusBarProps } from '../components/status-bar';
 import type { ProfileAnswers } from '../screens/profile-add-machine';
 import type { EditKind } from './edit-content';
-
-/** One block of scrollback output. */
-export interface OutputItem {
-  /** Stable identity for Ink's Static list. */
-  id: number;
-  /** The rendered block. */
-  node: ReactNode;
-}
 
 /** What /copy puts on the clipboard. */
 export interface CopyPayload {
@@ -202,16 +194,6 @@ export interface SessionState {
   editPreview?: EditPreviewState;
   /** Stores the edit awaiting confirmation. */
   setEditPreview: (state: EditPreviewState | undefined) => void;
-
-  /** The scrollback generation. Bumping it repaints the scrollback. */
-  generation: number;
-  /** Clears the terminal and repaints everything at the current width. */
-  redraw: () => void;
-
-  /** The command input editor state. */
-  editor: LineEditor;
-  /** Replaces the command input editor state. */
-  setEditor: (editor: LineEditor) => void;
 }
 
 /** The scrollback blocks and their copy payload. */
@@ -244,6 +226,6 @@ export interface SessionDeps extends SessionState {
   showDoc: (title: string, text: string) => void;
   /** Moves the input area to another screen. */
   navigate: (to: string) => void;
-  /** Hands the terminal to an external editor and restores Ink after. */
+  /** Hands the terminal to an external editor and restores the screen after. */
   suspend: SuspendTerminal;
 }

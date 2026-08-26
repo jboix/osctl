@@ -1,9 +1,9 @@
 // Session state for the shell: startup, scrollback outputs, and the status line.
 
-import { useApp } from 'ink';
-import { LineEditor, useRedraw } from 'inkstand';
+import { useApp, useStdout } from 'ink';
+import { suspendWithoutMouse, useScrollback as useOutputs } from 'inkstand';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   type Connection,
@@ -24,7 +24,6 @@ import type {
   CopyPayload,
   EditPickState,
   EditPreviewState,
-  OutputItem,
   PushFn,
   RemoveState,
   Scrollback,
@@ -38,7 +37,7 @@ export type { Session };
 
 import { createBackupActions } from './backup-actions';
 import { createEditActions } from './edit-actions';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushLine, pushNotice } from './output';
 import { createRemoveActions } from './remove-actions';
 
 /**
@@ -50,15 +49,20 @@ import { createRemoveActions } from './remove-actions';
 export function useSession(header: ReactNode): Session {
   const navigate = useNavigate();
   const { suspendTerminal } = useApp();
+  const { write } = useStdout();
   const scrollback = useScrollback(header);
   const state = useSessionState();
-  const fold = useDocFold(scrollback.hasDocs, state.redraw);
+  const fold = useDocFold(scrollback.hasDocs);
+  const suspend = useMemo(
+    () => suspendWithoutMouse(suspendTerminal, write),
+    [suspendTerminal, write],
+  );
   const deps: SessionDeps = {
     ...state,
     push: scrollback.push,
     showDoc: scrollback.showDoc,
     navigate,
-    suspend: suspendTerminal,
+    suspend,
   };
   useStartup(deps);
   useStatusRefresh(state.connection, state.setStatus);
@@ -69,20 +73,17 @@ export function useSession(header: ReactNode): Session {
  * Owns the global fold state of the document blocks.
  *
  * @param hasDocs - Whether any document block was pushed.
- * @param redraw - Clears the terminal and repaints everything.
  * @returns The fold state and its toggle.
  */
 function useDocFold(
   hasDocs: boolean,
-  redraw: () => void,
 ): Pick<Session, 'docsExpanded' | 'toggleDocs'> {
   const [docsExpanded, setDocsExpanded] = useState(false);
   const toggleDocs = useCallback(() => {
     if (hasDocs) {
       setDocsExpanded((expanded) => !expanded);
-      redraw();
     }
-  }, [hasDocs, redraw]);
+  }, [hasDocs]);
   return { docsExpanded, toggleDocs };
 }
 
@@ -94,15 +95,11 @@ function useDocFold(
 function useSessionState(): SessionState {
   const [status, setStatus] = useState<StatusBarProps>({});
   const [connection, setConnection] = useState<Connection | undefined>();
-  const [editor, setEditor] = useState(() => LineEditor.create());
   return {
     status,
     setStatus,
     connection,
     setConnection,
-    editor,
-    setEditor,
-    ...useRedraw(),
     ...useScreenState(),
   };
 }
@@ -110,14 +107,7 @@ function useSessionState(): SessionState {
 /** The screen related part of the session state. */
 type ScreenState = Omit<
   SessionState,
-  | 'status'
-  | 'setStatus'
-  | 'connection'
-  | 'setConnection'
-  | 'editor'
-  | 'setEditor'
-  | 'generation'
-  | 'redraw'
+  'status' | 'setStatus' | 'connection' | 'setConnection'
 >;
 
 /**
@@ -226,17 +216,18 @@ async function refreshStatus(
  * @returns The scrollback.
  */
 function useScrollback(header: ReactNode): Scrollback {
-  const [outputs, setOutputs] = useState<OutputItem[]>([
-    { id: 0, node: header },
-  ]);
+  const { items: outputs, push: pushNode } = useOutputs(header);
   const [lastCopy, setLastCopy] = useState<CopyPayload | undefined>();
   const [hasDocs, setHasDocs] = useState(false);
-  const push = useCallback<PushFn>((node, copy) => {
-    setOutputs((previous) => [...previous, { id: previous.length, node }]);
-    if (copy !== 'keep') {
-      setLastCopy(copy);
-    }
-  }, []);
+  const push = useCallback<PushFn>(
+    (node, copy) => {
+      pushNode(node);
+      if (copy !== 'keep') {
+        setLastCopy(copy);
+      }
+    },
+    [pushNode],
+  );
   const showDoc = useCallback(
     (title: string, text: string) => {
       setHasDocs(true);
@@ -295,10 +286,10 @@ function createActions(deps: SessionDeps): SessionActions {
 async function start(deps: SessionDeps): Promise<void> {
   const profile = new ProfileStore().defaultProfile();
   if (profile === undefined) {
-    pushLine(
+    pushNotice(
       deps,
+      'warn',
       'No profile found. Run /profile add to connect to a cluster.',
-      'yellow',
     );
     return;
   }
@@ -397,10 +388,10 @@ async function probe(
       clusterName: result.clusterName,
       status: result.status,
     });
-    pushLine(
+    pushNotice(
       deps,
-      `✔ Connected to ${result.clusterName} (${result.status}).`,
-      'green',
+      'success',
+      `Connected to ${result.clusterName} (${result.status}).`,
     );
     return undefined;
   } catch (error) {

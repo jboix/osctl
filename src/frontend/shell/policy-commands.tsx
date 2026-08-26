@@ -1,8 +1,8 @@
 // The /policy command runners.
 
+import { Table, type TableProps, tableText } from 'inkstand';
 import { describeFailure, explainIsm, listPolicies } from '../../engine/engine';
 import { matchesPattern } from '../../utils/pattern';
-import { Table, type TableProps, tableLines } from '../components/table';
 import type { CommandContext } from './command-types';
 import { requireConnection } from './command-utils';
 import { pushFailure, pushLine } from './output';
@@ -44,7 +44,7 @@ export async function runPolicyLs(
     };
     context.session.push(<Table {...table} />, {
       label: 'the policy list',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));
@@ -151,7 +151,7 @@ export async function runPolicyExplain(
     };
     context.session.push(<Table {...table} />, {
       label: 'the ISM report',
-      text: tableLines(table).join('\n'),
+      text: tableText(table),
     });
   } catch (error) {
     pushFailure(context.session, describeFailure(error));

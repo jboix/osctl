@@ -1,8 +1,6 @@
 // The command registry and the router. /help and the suggestions render from it.
 
-import { Box, Text } from 'ink';
-import { createRouter } from 'inkstand';
-import type { ReactElement } from 'react';
+import { CommandList, commandListText, createRouter } from 'inkstand';
 import packageJson from '../../../package.json';
 import { runAliasLs, runAliasRm } from './alias-commands';
 import {
@@ -35,7 +33,7 @@ import {
   runIndexSettingsApply,
   runIndexShow,
 } from './index-commands';
-import { pushLine } from './output';
+import { pushLine, pushNotice } from './output';
 import {
   runPolicyApply,
   runPolicyExplain,
@@ -315,9 +313,9 @@ const COMMANDS: Command[] = [
     name: '/help',
     description: 'Show the available commands',
     run: (context) =>
-      context.session.push(<Help />, {
+      context.session.push(<CommandList commands={COMMANDS} />, {
         label: 'the command list',
-        text: helpLines().join('\n'),
+        text: commandListText(COMMANDS),
       }),
   },
   {
@@ -335,9 +333,6 @@ const COMMANDS: Command[] = [
 
 /** The pure router over the command list. */
 const ROUTER = createRouter(COMMANDS);
-
-/** The width the command names are padded to in lists. */
-const NAME_WIDTH = 24;
 
 /**
  * Returns the commands matching a partially typed line. The leading `/` is
@@ -360,38 +355,12 @@ export function suggest(input: string): Command[] {
 export function route(line: string, context: CommandContext): void {
   const hit = ROUTER.match(line);
   if (hit === undefined) {
-    pushLine(
+    pushNotice(
       context.session,
+      'warn',
       `Unknown command "${line}". Type /help.`,
-      'yellow',
     );
     return;
   }
   void hit.command.run(context, hit.args);
-}
-
-/**
- * Formats the command list as plain lines, one per command.
- *
- * @returns The formatted lines.
- */
-function helpLines(): string[] {
-  return COMMANDS.map(
-    (command) => `${command.name.padEnd(NAME_WIDTH)} ${command.description}`,
-  );
-}
-
-/**
- * Renders the command list from the registry.
- *
- * @returns The help block.
- */
-function Help(): ReactElement {
-  return (
-    <Box flexDirection="column">
-      {helpLines().map((line) => (
-        <Text key={line}>{line}</Text>
-      ))}
-    </Box>
-  );
 }

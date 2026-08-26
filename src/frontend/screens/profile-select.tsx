@@ -1,7 +1,7 @@
 // A profile picker: lists the saved profiles and returns the chosen one.
 
-import { Box, Text, useInput } from 'ink';
-import { Select } from 'inkstand';
+import { Text, useInput } from 'ink';
+import { Pane, Select } from 'inkstand';
 import type { ReactElement } from 'react';
 import type { Profile } from '../../engine/engine';
 
@@ -32,19 +32,13 @@ export function ProfileSelect(props: ProfileSelectProps): ReactElement {
     }
   });
   return (
-    <Box
-      borderColor="cyan"
-      borderStyle="round"
-      flexDirection="column"
-      paddingX={1}
-    >
-      <Text color="cyan">{props.title} (esc, q, or ctrl+c to cancel)</Text>
+    <Pane detail="esc, q, or ctrl+c to cancel" focused title={props.title}>
       {props.profiles.length === 0 ? (
         <Text color="yellow">No profiles saved. Run /profile add.</Text>
       ) : (
         <Select items={toItems(props)} onSelect={(name) => pick(props, name)} />
       )}
-    </Box>
+    </Pane>
   );
 }
 

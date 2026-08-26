@@ -1,7 +1,7 @@
-// The shell frame: scrollback above, routed input area, status bar below.
+// The shell frame: the transcript above, the routed input area and the status bar below, filling the screen.
 
-import { Box } from 'ink';
-import { Scrollback, useResizeRedraw } from 'inkstand';
+import { Box, useWindowSize } from 'ink';
+import { type MouseInput, Transcript, useTranscript } from 'inkstand';
 import type { ReactElement } from 'react';
 import packageJson from '../../../package.json';
 import { DocFoldContext } from '../components/doc-block';
@@ -13,16 +13,23 @@ import { useSession } from './session';
 /**
  * Renders the shell.
  *
+ * @param props - The component props.
+ * @param props.mouse - The mouse input, from `createMouseInput`.
  * @returns The root element of the frontend.
  */
-export function Shell(): ReactElement {
+export function Shell(props: { mouse: MouseInput }): ReactElement {
+  const { rows, columns } = useWindowSize();
   const session = useSession(<Header version={packageJson.version} />);
-  useResizeRedraw(session.redraw);
+  const transcript = useTranscript({ mouse: props.mouse });
   return (
     <DocFoldContext.Provider value={session.docsExpanded}>
-      <Box flexDirection="column" paddingX={1}>
-        <Scrollback generation={session.generation} items={session.outputs} />
-        <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column" height={rows} paddingX={1} width={columns}>
+        <Transcript
+          {...transcript}
+          hint="ctrl+end returns to the end"
+          items={session.outputs}
+        />
+        <Box flexDirection="column" flexShrink={0} marginTop={1}>
           <ScreenRoutes session={session} />
           <StatusBar
             {...session.status}

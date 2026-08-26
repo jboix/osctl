@@ -3,7 +3,7 @@
 import { describeFailure, getSnapshot } from '../../engine/engine';
 import { editSkeleton } from './edit-content';
 import { runEditor } from './edit-runner';
-import { pushFailure, pushLine } from './output';
+import { pushFailure, pushNotice } from './output';
 import type { SessionDeps } from './session-types';
 
 /**
@@ -52,7 +52,7 @@ export async function openRestoreEditor(
   try {
     const snapshot = await getSnapshot(connection, repo, name);
     if (snapshot === undefined) {
-      pushLine(deps, `No snapshot "${repo}/${name}".`, 'yellow');
+      pushNotice(deps, 'warn', `No snapshot "${repo}/${name}".`);
       return;
     }
     void runEditor(
