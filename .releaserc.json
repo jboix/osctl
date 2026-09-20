@@ -16,10 +16,20 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "dist/osctl-linux-x64", "label": "osctl linux x64" },
-          { "path": "dist/osctl-linux-arm64", "label": "osctl linux arm64" },
-          { "path": "dist/osctl-darwin-x64", "label": "osctl macos x64" },
-          { "path": "dist/osctl-darwin-arm64", "label": "osctl macos arm64" },
+          { "path": "dist/osctl-linux-x64.tar.gz", "label": "osctl linux x64" },
+          {
+            "path": "dist/osctl-linux-arm64.tar.gz",
+            "label": "osctl linux arm64"
+          },
+          {
+            "path": "dist/osctl-darwin-x64.tar.gz",
+            "label": "osctl macos x64"
+          },
+          {
+            "path": "dist/osctl-darwin-arm64.tar.gz",
+            "label": "osctl macos arm64"
+          },
+          { "path": "dist/SHA256SUMS", "label": "checksums" },
           { "path": "install-osctl.sh", "label": "install script" }
         ]
       }
