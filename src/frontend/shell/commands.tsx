@@ -63,17 +63,17 @@ export type { Command, CommandContext } from './command-types';
 const COMMANDS: Command[] = [
   {
     name: '/index ls',
-    description: 'List the indices: /index ls [pattern]',
+    description: 'List the indices: "/index ls [pattern]"',
     run: (context, args) => void runIndexLs(context, args[0]),
   },
   {
     name: '/index rm',
-    description: 'Delete indices from a selection: /index rm [pattern]',
+    description: 'Delete indices from a selection: "/index rm [pattern]"',
     run: (context, args) => void runIndexRm(context, args[0]),
   },
   {
     name: '/index create',
-    description: 'Create an index: /index create <name> [write-alias]',
+    description: 'Create an index: "/index create <name> [write-alias]"',
     run: (context, args) => void runIndexCreate(context, args[0], args[1]),
   },
   {
@@ -83,12 +83,12 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/index show',
-    description: 'Print an index, from a picker: /index show [name]',
+    description: 'Print an index, from a picker: "/index show [name]"',
     run: (context, args) => runIndexShow(context, args[0]),
   },
   {
     name: '/index settings',
-    description: 'Print the settings of an index: /index settings [name]',
+    description: 'Print the settings of an index: "/index settings [name]"',
     run: (context, args) => runIndexSettings(context, args[0]),
   },
   {
@@ -98,7 +98,8 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/alias ls',
-    description: 'Show which alias points at which index: /alias ls [pattern]',
+    description:
+      'Show which alias points at which index: "/alias ls [pattern]"',
     run: (context, args) => void runAliasLs(context, args[0]),
   },
   {
@@ -112,32 +113,32 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/alias rm',
-    description: 'Remove aliases from a selection: /alias rm [pattern]',
+    description: 'Remove aliases from a selection: "/alias rm [pattern]"',
     run: (context, args) => void runAliasRm(context, args[0]),
   },
   {
     name: '/template ls',
-    description: 'List the index templates: /template ls [pattern]',
+    description: 'List the index templates: "/template ls [pattern]"',
     run: (context, args) => void runTemplateLs(context, args[0]),
   },
   {
     name: '/template show',
-    description: 'Print a template, from a picker: /template show [name]',
+    description: 'Print a template, from a picker: "/template show [name]"',
     run: (context, args) => runTemplateShow(context, args[0]),
   },
   {
     name: '/template apply',
-    description: 'Edit a template in your editor: /template apply [name]',
+    description: 'Edit a template in your editor: "/template apply [name]"',
     run: (context, args) => runTemplateApply(context, args[0]),
   },
   {
     name: '/template rm',
-    description: 'Delete templates from a selection: /template rm [pattern]',
+    description: 'Delete templates from a selection: "/template rm [pattern]"',
     run: (context, args) => void runTemplateRm(context, args[0]),
   },
   {
     name: '/component ls',
-    description: 'List the component templates: /component ls [pattern]',
+    description: 'List the component templates: "/component ls [pattern]"',
     run: (context, args) => void runComponentLs(context, args[0]),
   },
   {
@@ -147,7 +148,7 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/component apply',
-    description: 'Edit a component template: /component apply [name]',
+    description: 'Edit a component template: "/component apply [name]"',
     run: (context, args) => runComponentApply(context, args[0]),
   },
   {
@@ -157,27 +158,27 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/policy ls',
-    description: 'List the ISM policies: /policy ls [pattern]',
+    description: 'List the ISM policies: "/policy ls [pattern]"',
     run: (context, args) => void runPolicyLs(context, args[0]),
   },
   {
     name: '/policy show',
-    description: 'Print a policy, from a picker: /policy show [name]',
+    description: 'Print a policy, from a picker: "/policy show [name]"',
     run: (context, args) => runPolicyShow(context, args[0]),
   },
   {
     name: '/policy apply',
-    description: 'Edit a policy in your editor: /policy apply [name]',
+    description: 'Edit a policy in your editor: "/policy apply [name]"',
     run: (context, args) => runPolicyApply(context, args[0]),
   },
   {
     name: '/policy rm',
-    description: 'Delete policies from a selection: /policy rm [pattern]',
+    description: 'Delete policies from a selection: "/policy rm [pattern]"',
     run: (context, args) => void runPolicyRm(context, args[0]),
   },
   {
     name: '/policy explain',
-    description: 'Show the ISM state per index: /policy explain [pattern]',
+    description: 'Show the ISM state per index: "/policy explain [pattern]"',
     run: (context, args) => void runPolicyExplain(context, args[0]),
   },
   {
@@ -216,12 +217,12 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/task show',
-    description: 'Print a task with its status: /task show <id>',
+    description: 'Print a task with its status: "/task show <id>"',
     run: (context, args) => void runTaskShow(context, args[0]),
   },
   {
     name: '/task cancel',
-    description: 'Cancel tasks from a selection: /task cancel [id]',
+    description: 'Cancel tasks from a selection: "/task cancel [id]"',
     run: (context, args) => void runTaskCancel(context, args[0]),
   },
   {
@@ -231,27 +232,27 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/snapshot ls',
-    description: 'List the snapshots: /snapshot ls [repo]',
+    description: 'List the snapshots: "/snapshot ls [repo]"',
     run: (context, args) => void runSnapshotLs(context, args[0]),
   },
   {
     name: '/snapshot show',
-    description: 'Print a snapshot: /snapshot show <repo> <name>',
+    description: 'Print a snapshot: "/snapshot show <repo> <name>"',
     run: (context, args) => void runSnapshotShow(context, args[0], args[1]),
   },
   {
     name: '/snapshot create',
-    description: 'Take a snapshot: /snapshot create <repo> <name>',
+    description: 'Take a snapshot: "/snapshot create <repo> <name>"',
     run: (context, args) => runSnapshotCreate(context, args[0], args[1]),
   },
   {
     name: '/snapshot restore',
-    description: 'Restore a snapshot: /snapshot restore <repo> <name>',
+    description: 'Restore a snapshot: "/snapshot restore <repo> <name>"',
     run: (context, args) => runSnapshotRestore(context, args[0], args[1]),
   },
   {
     name: '/snapshot rm',
-    description: 'Delete snapshots from a selection: /snapshot rm <repo>',
+    description: 'Delete snapshots from a selection: "/snapshot rm <repo>"',
     run: (context, args) => void runSnapshotRm(context, args[0], args[1]),
   },
   {
@@ -265,23 +266,23 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/backup ls',
-    description: 'List the backups of this profile: /backup ls [pattern]',
+    description: 'List the backups of this profile: "/backup ls [pattern]"',
     run: (context, args) => runBackupLs(context, args[0]),
   },
   {
     name: '/backup show',
-    description: 'Print a backup, from a picker: /backup show [name]',
+    description: 'Print a backup, from a picker: "/backup show [name]"',
     run: (context, args) => runBackupShow(context, args[0]),
   },
   {
     name: '/backup apply',
     description:
-      'Restore a backup after a diff confirmation: /backup apply [name]',
+      'Restore a backup after a diff confirmation: "/backup apply [name]"',
     run: (context, args) => runBackupApply(context, args[0]),
   },
   {
     name: '/backup rm',
-    description: 'Delete backups from a selection: /backup rm [pattern]',
+    description: 'Delete backups from a selection: "/backup rm [pattern]"',
     run: (context, args) => runBackupRm(context, args[0]),
   },
   {
@@ -296,12 +297,12 @@ const COMMANDS: Command[] = [
   },
   {
     name: '/profile default',
-    description: 'Set the default profile: /profile default [name]',
+    description: 'Set the default profile: "/profile default [name]"',
     run: runProfileDefault,
   },
   {
     name: '/profile rm',
-    description: 'Delete profiles from a selection: /profile rm [pattern]',
+    description: 'Delete profiles from a selection: "/profile rm [pattern]"',
     run: (context, args) => runProfileRm(context, args[0]),
   },
   {
@@ -358,7 +359,7 @@ export function route(line: string, context: CommandContext): void {
     pushNotice(
       context.session,
       'warn',
-      `Unknown command "${line}". Type /help.`,
+      `Unknown command "${line}". Type "/help".`,
     );
     return;
   }

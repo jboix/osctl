@@ -81,7 +81,7 @@ export async function runTaskShow(
     return;
   }
   if (id === undefined) {
-    pushNotice(context.session, 'warn', 'Usage: /task show <id>.');
+    pushNotice(context.session, 'warn', 'Usage: "/task show <id>".');
     return;
   }
   try {

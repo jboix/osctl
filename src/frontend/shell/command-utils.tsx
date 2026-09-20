@@ -15,7 +15,7 @@ export function requireConnection(
 ): Connection | undefined {
   const connection = context.session.connection;
   if (connection === undefined) {
-    pushNotice(context.session, 'warn', 'Not connected. Run /profile add.');
+    pushNotice(context.session, 'warn', 'Not connected. Run "/profile add".');
   }
   return connection;
 }

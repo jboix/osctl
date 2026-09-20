@@ -22,7 +22,7 @@ function requireStore(context: CommandContext): BackupStore | undefined {
     pushNotice(
       context.session,
       'warn',
-      'No profile selected. Run /profile add.',
+      'No profile selected. Run "/profile add".',
     );
   }
   return store;

@@ -130,11 +130,11 @@ function showBackup(backup: BackupInfo, deps: SessionDeps): void {
 /** The hint per backup type that cannot be restored directly. */
 const REFERENCE_ONLY: Record<'alias' | 'cluster' | 'settings', string> = {
   alias:
-    'Alias snapshots are reference only. Use /backup show and /alias apply.',
+    'Alias snapshots are reference only. Use "/backup show" and "/alias apply".',
   cluster:
-    'Cluster settings backups are reference only. Use /backup show and /cluster settings apply.',
+    'Cluster settings backups are reference only. Use "/backup show" and "/cluster settings apply".',
   settings:
-    'Index settings backups are reference only. Use /backup show and /index settings apply.',
+    'Index settings backups are reference only. Use "/backup show" and "/index settings apply".',
 };
 
 /**
@@ -152,7 +152,7 @@ async function applyBackup(
 ): Promise<void> {
   const connection = deps.connection;
   if (connection === undefined) {
-    pushNotice(deps, 'warn', 'Not connected. Run /profile add.');
+    pushNotice(deps, 'warn', 'Not connected. Run "/profile add".');
     return;
   }
   if (

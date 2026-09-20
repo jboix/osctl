@@ -26,7 +26,7 @@ export function runProfileDefault(
     pushNotice(
       context.session,
       'warn',
-      `No profile named "${name}". Run /profile ls.`,
+      `No profile named "${name}". Run "/profile ls".`,
     );
     return;
   }
