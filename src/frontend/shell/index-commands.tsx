@@ -133,7 +133,7 @@ export async function runIndexCreate(
     pushNotice(
       context.session,
       'warn',
-      'Usage: /index create <name> [write-alias].',
+      'Usage: "/index create <name> [write-alias]".',
     );
     return;
   }
@@ -196,7 +196,7 @@ export async function runIndexRollover(
     return;
   }
   if (alias === undefined) {
-    pushNotice(context.session, 'warn', 'Usage: /index rollover <alias>.');
+    pushNotice(context.session, 'warn', 'Usage: "/index rollover <alias>".');
     return;
   }
   try {

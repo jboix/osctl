@@ -126,7 +126,11 @@ export async function runSnapshotShow(
     return;
   }
   if (repo === undefined || name === undefined) {
-    pushNotice(context.session, 'warn', 'Usage: /snapshot show <repo> <name>.');
+    pushNotice(
+      context.session,
+      'warn',
+      'Usage: "/snapshot show <repo> <name>".',
+    );
     return;
   }
   try {
@@ -164,7 +168,7 @@ export function runSnapshotCreate(
     pushNotice(
       context.session,
       'warn',
-      'Usage: /snapshot create <repo> <name>.',
+      'Usage: "/snapshot create <repo> <name>".',
     );
     return;
   }
@@ -191,7 +195,7 @@ export function runSnapshotRestore(
     pushNotice(
       context.session,
       'warn',
-      'Usage: /snapshot restore <repo> <name>.',
+      'Usage: "/snapshot restore <repo> <name>".',
     );
     return;
   }
@@ -219,7 +223,7 @@ export async function runSnapshotRm(
     pushNotice(
       context.session,
       'warn',
-      'Usage: /snapshot rm <repo> [pattern].',
+      'Usage: "/snapshot rm <repo> [pattern]".',
     );
     return;
   }

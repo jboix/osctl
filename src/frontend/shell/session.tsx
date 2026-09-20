@@ -289,7 +289,7 @@ async function start(deps: SessionDeps): Promise<void> {
     pushNotice(
       deps,
       'warn',
-      'No profile found. Run /profile add to connect to a cluster.',
+      'No profile found. Run "/profile add" to connect to a cluster.',
     );
     return;
   }

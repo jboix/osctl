@@ -156,7 +156,7 @@ function removeProfiles(names: string[], deps: SessionDeps): void {
 function removeBackups(ids: string[], deps: SessionDeps): void {
   const store = backupStore(deps);
   if (store === undefined) {
-    pushNotice(deps, 'warn', 'No profile selected. Run /profile add.');
+    pushNotice(deps, 'warn', 'No profile selected. Run "/profile add".');
     return;
   }
   for (const id of ids) {

@@ -284,12 +284,12 @@ async function applyBackgroundEdit(
   const name = preview.name ?? '';
   if (preview.kind === 'snapshot') {
     await createSnapshot(connection, repo, name, preview.payload);
-    return `Snapshot "${repo}/${name}" started. Watch it with /snapshot ls.`;
+    return `Snapshot "${repo}/${name}" started. Watch it with "/snapshot ls".`;
   }
   if (preview.kind === 'restore') {
     await restoreSnapshot(connection, repo, name, preview.payload);
     return `Restore of "${repo}/${name}" started.`;
   }
   const task = await reindex(connection, preview.payload);
-  return `Reindex started as task ${task}. Watch it with /task show ${task}.`;
+  return `Reindex started as task ${task}. Watch it with "/task show ${task}".`;
 }

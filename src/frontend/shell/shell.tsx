@@ -36,7 +36,7 @@ export function Shell(props: { mouse: MouseInput }): ReactElement {
             hint={
               session.lastCopy === undefined
                 ? undefined
-                : '/copy copies the last output'
+                : '"/copy" copies the last output'
             }
           />
         </Box>
