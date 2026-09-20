@@ -41,6 +41,15 @@ chmod +x install-osctl.sh
 export PATH="$HOME/.osctl/current:$PATH"
 ```
 
+To install by hand, take the archive for your platform from the
+[releases page](https://github.com/jboix/osctl/releases) and extract it. The archive carries the
+execute bit, and `SHA256SUMS` lists the checksum of every archive:
+
+```bash
+tar -xzf osctl-linux-x64.tar.gz
+./osctl
+```
+
 Then start osctl and connect to a cluster:
 
 ```bash
