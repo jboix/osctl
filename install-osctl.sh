@@ -52,27 +52,71 @@ case "$(uname -m)" in
 esac
 
 ASSET="osctl-${OS}-${ARCH}"
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${ASSET}"
+ARCHIVE="${ASSET}.tar.gz"
+BASE_URL="https://github.com/${REPO}/releases/download/v${VERSION}"
 
 INSTALL_BASE="$(cd "$(dirname "$0")" && pwd)"
 VERSION_DIR="${INSTALL_BASE}/${VERSION}"
 CURRENT_SYMLINK="${INSTALL_BASE}/current"
+
+# Prints the sha256 of a file. Prints nothing when no hashing tool is installed.
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{ print $1 }'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{ print $1 }'
+  fi
+}
+
+# Checks the downloaded archive against the published SHA256SUMS.
+verify_archive() {
+  local dir="$1"
+  local expected actual
+  if ! curl -fsSL -o "${dir}/SHA256SUMS" "${BASE_URL}/SHA256SUMS"; then
+    echo "No SHA256SUMS published for v${VERSION}. Skipping the checksum check."
+    return 0
+  fi
+  actual="$(sha256_of "${dir}/${ARCHIVE}")"
+  if [ -z "$actual" ]; then
+    echo "Neither sha256sum nor shasum is installed. Skipping the checksum check."
+    return 0
+  fi
+  expected="$(awk -v name="$ARCHIVE" '$2 == name { print $1 }' "${dir}/SHA256SUMS")"
+  if [ -z "$expected" ]; then
+    echo "SHA256SUMS has no entry for ${ARCHIVE}."
+    exit 1
+  fi
+  if [ "$expected" != "$actual" ]; then
+    echo "Checksum mismatch for ${ARCHIVE}."
+    echo "  expected ${expected}"
+    echo "  actual   ${actual}"
+    exit 1
+  fi
+  echo "Checksum verified."
+}
 
 echo "Installing osctl ${VERSION} (${OS}-${ARCH}) into ${VERSION_DIR}"
 
 if [ -f "${VERSION_DIR}/osctl" ]; then
   echo "Version ${VERSION} is already installed."
 else
-  TMP_FILE="$(mktemp)"
-  trap 'rm -f "$TMP_FILE"' EXIT
-  echo "Downloading ${DOWNLOAD_URL}"
-  if ! curl -fSL -o "$TMP_FILE" "$DOWNLOAD_URL"; then
-    echo "Download failed. Does v${VERSION} exist and does it ship ${ASSET}?"
+  TMP_DIR="$(mktemp -d)"
+  trap 'rm -rf "$TMP_DIR"' EXIT
+  echo "Downloading ${BASE_URL}/${ARCHIVE}"
+  if curl -fSL -o "${TMP_DIR}/${ARCHIVE}" "${BASE_URL}/${ARCHIVE}"; then
+    verify_archive "$TMP_DIR"
+    tar -xzf "${TMP_DIR}/${ARCHIVE}" -C "$TMP_DIR"
+  elif curl -fSL -o "${TMP_DIR}/osctl" "${BASE_URL}/${ASSET}"; then
+    # Releases before 1.0.0 shipped the bare binary instead of an archive.
+    echo "v${VERSION} ships no archive. Fell back to the bare binary."
+  else
+    echo "Download failed. Does v${VERSION} exist and does it ship ${ARCHIVE}?"
     exit 1
   fi
-  chmod +x "$TMP_FILE"
+  chmod +x "${TMP_DIR}/osctl"
   mkdir -p "$VERSION_DIR"
-  mv "$TMP_FILE" "${VERSION_DIR}/osctl"
+  mv "${TMP_DIR}/osctl" "${VERSION_DIR}/osctl"
+  rm -rf "$TMP_DIR"
   trap - EXIT
 fi
 
