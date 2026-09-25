@@ -23,7 +23,7 @@ Install with npm (Node 20 or later):
 npm install -g osctl
 ```
 
-Or run it once without installing:
+Or just run it with npx:
 
 ```bash
 npx osctl
