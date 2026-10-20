@@ -61,7 +61,7 @@
     "dependency-cruiser": "^18.1.1",
     "husky": "^9.1.7",
     "knip": "^6.31.0",
-    "react-devtools-core": "^7.0.1",
+    "react-devtools-core": "^8.0.0",
     "semantic-release": "^25.0.9",
     "typescript": "^6"
   },
