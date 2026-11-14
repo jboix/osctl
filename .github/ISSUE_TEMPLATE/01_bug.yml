@@ -1,0 +1,56 @@
+name: 🐛 Bug Report
+description: Report a possible bug or regression
+title: "🐛 <TITLE>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Describe the problem clearly. A report that
+        cannot be reproduced takes much longer to fix.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment information
+      description: >
+        The osctl version (shown under the logo), how you installed it (npm,
+        npx, or a release archive), your operating system and terminal, and the
+        OpenSearch version. Remove credentials and hostnames before posting.
+      value: |
+        <details>
+
+        ```
+        Paste output here
+        ```
+
+        </details>
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: What happened?
+      description: >
+        The commands you ran and the cluster state they ran against, such as
+        the indices, aliases, or templates involved.
+      placeholder: |
+        1.
+        2.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Expected result
+      description: Describe what you expected to happen.
+      placeholder: /index rollover should keep the read alias on the new index.
+    validations:
+      required: true
+  - type: checkboxes
+    id: coc
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow the [Code of Conduct](https://github.com/jboix/osctl/blob/main/docs/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow the osctl Code of Conduct
+          required: true

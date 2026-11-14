@@ -15,8 +15,8 @@ code, documentation, structure, or formatting.
 
 ## Checklist
 
-- [ ] I have followed the project's style and contribution guidelines.
+- [ ] I have followed the [contributing guide](https://github.com/jboix/osctl/blob/main/docs/CONTRIBUTING.md).
 - [ ] I have performed a self-review of my own changes.
-- [ ] I have made corresponding changes to the documentation.
+- [ ] I have updated `docs/design/commands.md` for any change in command behavior.
 - [ ] I have added tests that prove my fix is effective or that my feature works.
 - [ ] `bun run verify` passes locally.

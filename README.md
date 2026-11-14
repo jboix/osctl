@@ -82,7 +82,8 @@ backing API of each command.
 ## Contributing
 
 See the [contributing guide](docs/CONTRIBUTING.md). Participation is governed by the
-[Code of Conduct](docs/CODE_OF_CONDUCT.md).
+[Code of Conduct](docs/CODE_OF_CONDUCT.md). Report security problems privately, as the
+[security policy](docs/SECURITY.md) describes.
 
 ## License
 
