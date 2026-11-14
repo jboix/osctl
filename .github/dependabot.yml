@@ -20,11 +20,11 @@ updates:
       interval: "weekly"
     groups:
       bun-dependencies:
-        patterns: [ "*" ]
-        update-types: [ "minor", "patch" ]
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     ignore:
       # TypeScript 7 (the native compiler) has no stable JS API yet, which
       # dependency-cruiser needs to parse TypeScript. Staying on 6.x until
       # dependency-cruiser supports 7.
       - dependency-name: "typescript"
-        update-types: [ "version-update:semver-major" ]
+        update-types: ["version-update:semver-major"]

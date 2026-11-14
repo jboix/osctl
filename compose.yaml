@@ -20,11 +20,15 @@ services:
         soft: -1
         hard: -1
     ports:
-      - '9200:9200'
+      - "9200:9200"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     healthcheck:
-      test: ['CMD-SHELL', 'curl -fs http://localhost:9200/_cluster/health || exit 1']
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fs http://localhost:9200/_cluster/health || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 24
@@ -35,7 +39,7 @@ services:
       - OPENSEARCH_HOSTS=["http://opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
-      - '5601:5601'
+      - "5601:5601"
     depends_on:
       opensearch:
         condition: service_healthy
@@ -43,7 +47,7 @@ services:
   # Secured node to test the auth flow: https with self-signed demo certificates,
   # user "admin", password from OSCTL_DEV_ADMIN_PASSWORD (default below).
   opensearch-secure:
-    profiles: ['secure']
+    profiles: ["secure"]
     image: opensearchproject/opensearch:3
     environment:
       - discovery.type=single-node
@@ -55,13 +59,13 @@ services:
         soft: -1
         hard: -1
     ports:
-      - '9201:9200'
+      - "9201:9200"
     volumes:
       - opensearch-secure-data:/usr/share/opensearch/data
     healthcheck:
       test:
         [
-          'CMD-SHELL',
+          "CMD-SHELL",
           'curl -fsk -u "admin:${OSCTL_DEV_ADMIN_PASSWORD:-OsctlDev!2345}" https://localhost:9200/_cluster/health || exit 1',
         ]
       interval: 5s

@@ -51,25 +51,25 @@
     "prepack": "bun run build:npm"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
-    "@commitlint/cli": "^21.2.2",
-    "@commitlint/config-conventional": "^21.2.2",
+    "@biomejs/biome": "^2.6.7",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^11.0.1",
-    "@types/bun": "1.4.2",
-    "@types/react": "^19.2.18",
-    "dependency-cruiser": "^18.1.1",
+    "@types/bun": "1.4.4",
+    "@types/react": "^19.3.0",
+    "dependency-cruiser": "^18.7.2",
     "husky": "^9.1.7",
-    "knip": "^6.31.0",
-    "react-devtools-core": "^7.0.1",
+    "knip": "^6.45.1",
+    "react-devtools-core": "^8.0.0",
     "semantic-release": "^25.0.9",
-    "typescript": "^6"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@opensearch-project/opensearch": "^3.6.0",
-    "ink": "^7.1.1",
+    "@opensearch-project/opensearch": "^3.10.0",
+    "ink": "^8.0.0",
     "inkstand": "^1.0.1",
-    "react": "^19.2.8",
-    "react-router": "^8.3.0"
+    "react": "^19.3.1",
+    "react-router": "^8.5.1"
   }
 }
