@@ -65,6 +65,10 @@ jobs:
         run: |
           bun run test:coverage
 
+      - name: Run the rule tests
+        run: |
+          bun test ./.vibator/
+
       - name: Build the binary
         run: |
           bun run build
