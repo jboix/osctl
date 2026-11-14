@@ -7,7 +7,7 @@ typing; the slash form is the official one.
 ## index
 
 | Command                              | Description                                                                                                                                       | Backing API                                 |
-|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | `/index ls [pattern]`                | List indices with health, doc, deleted, and indexed counts, size, creation date, and aliases                                                      | `_cat/indices`, `_cat/aliases`              |
 | `/index rm [pattern]`                | Delete indices. Opens a multi-select list of the matching indices. Confirms with index count and total size. Warns when a write index is selected | `DELETE /{index}`                           |
 | `/index create <name> [write-alias]` | Create an index. Without the alias shorthand, the body opens in the editor                                                                        | `PUT /{index}`                              |
@@ -19,7 +19,7 @@ typing; the slash form is the official one.
 ## alias
 
 | Command               | Description                                                                | Backing API                      |
-|-----------------------|----------------------------------------------------------------------------|----------------------------------|
+| --------------------- | -------------------------------------------------------------------------- | -------------------------------- |
 | `/alias ls [pattern]` | Show a tree of aliases to indices. Marks the write index and shows filters | `GET /_alias`                    |
 | `/alias apply`        | Edit alias actions in the editor, preview a summary, then apply            | `POST /_aliases`                 |
 | `/alias rm [pattern]` | Remove aliases from a selection after confirmation                         | `DELETE /{index}/_alias/{alias}` |
@@ -27,7 +27,7 @@ typing; the slash form is the official one.
 ## template
 
 | Command                  | Description                                                                                                                                                     | Backing API                           |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | `/template ls [pattern]` | List index templates                                                                                                                                            | `GET /_index_template`                |
 | `/template show [name]`  | Print a template, from a picker when the name does not settle it                                                                                                | `GET /_index_template/{name}`         |
 | `/template apply [name]` | Edit a template (picked, or new, when the name does not settle it), confirm a line diff, then save. Reminds that existing indices are unaffected until rollover | `GET` + `PUT /_index_template/{name}` |
@@ -35,17 +35,17 @@ typing; the slash form is the official one.
 
 ## component
 
-| Command                   | Description                                                                                                   | Backing API                               |
-|---------------------------|---------------------------------------------------------------------------------------------------------------|-------------------------------------------|
-| `/component ls [pattern]` | List component templates                                                                                      | `GET /_component_template`                |
-| `/component show [name]`  | Print a component template, from a picker when the name does not settle it                                    | `GET /_component_template/{name}`         |
+| Command                   | Description                                                                                                  | Backing API                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `/component ls [pattern]` | List component templates                                                                                     | `GET /_component_template`                |
+| `/component show [name]`  | Print a component template, from a picker when the name does not settle it                                   | `GET /_component_template/{name}`         |
 | `/component apply [name]` | Edit a component template (picked, or new, when the name does not settle it), confirm a line diff, then save | `GET` + `PUT /_component_template/{name}` |
-| `/component rm [pattern]` | Delete component templates from a selection after confirmation                                                | `DELETE /_component_template/{name}`      |
+| `/component rm [pattern]` | Delete component templates from a selection after confirmation                                               | `DELETE /_component_template/{name}`      |
 
 ## policy (ISM)
 
 | Command                     | Description                                                                                                                                       | Backing API                                  |
-|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | `/policy ls [pattern]`      | List ISM policies                                                                                                                                 | `GET /_plugins/_ism/policies`                |
 | `/policy show [name]`       | Print a policy, from a picker when the name does not settle it                                                                                    | `GET /_plugins/_ism/policies/{name}`         |
 | `/policy apply [name]`      | Edit a policy (picked, or new, when the name does not settle it), confirm a line diff, then save. Resolves `seq_no` and `primary_term` internally | `GET` + `PUT /_plugins/_ism/policies/{name}` |
@@ -55,7 +55,7 @@ typing; the slash form is the official one.
 ## cluster
 
 | Command                   | Description                                                                                 | Backing API                                                   |
-|---------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| ------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `/cluster info`           | Show the health, active blocks, and disk usage                                              | `_cluster/health`, `_cluster/state/blocks`, `_cat/allocation` |
 | `/cluster settings`       | Show the persistent and transient cluster settings, with flat keys                          | `GET /_cluster/settings`                                      |
 | `/cluster settings apply` | Edit the cluster settings in the editor, confirm a line diff, then save                     | `GET` + `PUT /_cluster/settings`                              |
@@ -65,7 +65,7 @@ typing; the slash form is the official one.
 ## task
 
 | Command             | Description                                                                                 | Backing API                 |
-|---------------------|---------------------------------------------------------------------------------------------|-----------------------------|
+| ------------------- | ------------------------------------------------------------------------------------------- | --------------------------- |
 | `/task ls`          | List running tasks with action, type, parent, running time, and node, longest running first | `_cat/tasks`                |
 | `/task show <id>`   | Print a task with its status and progress counters                                          | `GET /_tasks/{id}`          |
 | `/task cancel [id]` | Cancel tasks from a selection after confirmation. Cancellation is asynchronous              | `POST /_tasks/{id}/_cancel` |
@@ -76,7 +76,7 @@ returns one.
 ## snapshot
 
 | Command                           | Description                                                                    | Backing API                              |
-|-----------------------------------|--------------------------------------------------------------------------------|------------------------------------------|
+| --------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------- |
 | `/snapshot repo ls`               | List the snapshot repositories                                                 | `GET /_snapshot`                         |
 | `/snapshot ls [repo]`             | List snapshots with state, index count, start time, duration, and failures     | `GET /_snapshot/{repo}/_all`             |
 | `/snapshot show <repo> <name>`    | Print a snapshot                                                               | `GET /_snapshot/{repo}/{name}`           |
@@ -89,13 +89,13 @@ Snapshot clone, repository cleanup, and repository management are not covered.
 ## reindex
 
 | Command    | Description                                                               | Backing API                                |
-|------------|---------------------------------------------------------------------------|--------------------------------------------|
+| ---------- | ------------------------------------------------------------------------- | ------------------------------------------ |
 | `/reindex` | Edit a reindex body in the editor, confirm, then run as a background task | `POST /_reindex?wait_for_completion=false` |
 
 ## backup
 
 | Command                | Description                                                                |
-|------------------------|----------------------------------------------------------------------------|
+| ---------------------- | -------------------------------------------------------------------------- |
 | `/backup ls [pattern]` | List this profile's backups with type, name, and save time                 |
 | `/backup show [name]`  | Print a backup, from a picker when the name does not settle it             |
 | `/backup apply [name]` | Restore a backup: confirm a line diff against the live document, then save |
@@ -103,18 +103,18 @@ Snapshot clone, repository cleanup, and repository management are not covered.
 
 ## Backups
 
-Every change that overwrites existing documents is backed up, that includes: `/template apply`, 
+Every change that overwrites existing documents is backed up, that includes: `/template apply`,
 `/component apply`, `/policy apply`, `/alias apply`, `/cluster settings apply` and
 `/index settings apply`.
 
-- Backups are stored per profile under 
+- Backups are stored per profile under
   `~/.config/osctl/backups/<profile>/<type>/<name>-<timestamp>.json`.
 - The last 20 versions per document are kept. Older ones are deleted on save.
 
 ## profile
 
 | Command                   | Description                                                  |
-|---------------------------|--------------------------------------------------------------|
+| ------------------------- | ------------------------------------------------------------ |
 | `/profile add`            | Run the connect wizard: add a profile and connect to it      |
 | `/profile ls`             | List the profiles as a select; picking one switches to it    |
 | `/profile default [name]` | Set the default profile, interactively when no name is given |
@@ -122,12 +122,12 @@ Every change that overwrites existing documents is backed up, that includes: `/t
 
 ## others
 
-| Command                   | Description                                                  |
-|---------------------------|--------------------------------------------------------------|
-| `/copy`                   | Copy the last command output to the clipboard                |
-| `/help`                   | Show the available commands                                  |
-| `/version`                | Print the osctl version                                      |
-| `/exit`                   | Quit osctl                                                   |
+| Command    | Description                                   |
+| ---------- | --------------------------------------------- |
+| `/copy`    | Copy the last command output to the clipboard |
+| `/help`    | Show the available commands                   |
+| `/version` | Print the osctl version                       |
+| `/exit`    | Quit osctl                                    |
 
 ## screen
 
@@ -139,7 +139,7 @@ the line keeps its place on screen. osctl reads the mouse, so the terminal's own
 selection needs shift held.
 
 | Key                | Effect                                                 |
-|--------------------|--------------------------------------------------------|
+| ------------------ | ------------------------------------------------------ |
 | page up, page down | Move the transcript one screen                         |
 | mouse wheel        | Move the transcript three lines                        |
 | ctrl+end           | Return the transcript to the end and follow new output |

@@ -29,7 +29,7 @@ Or just run it with npx:
 npx osctl
 ```
 
-Standalone binaries are also available. The installation script keeps versions side by side and 
+Standalone binaries are also available. The installation script keeps versions side by side and
 points a `current` symlink at the active one; run it again to update, or with `-v <version>` to pin
 or roll back:
 
@@ -59,21 +59,21 @@ osctl
 
 ## Commands
 
-| Family      | Commands                                                               |
-|-------------|------------------------------------------------------------------------|
-| `/index`    | `ls`, `create`, `rm`, `rollover`, `show`, `settings`, `settings apply` |
-| `/alias`    | `ls`, `apply`, `rm`                                                    |
-| `/template` | `ls`, `show`, `apply`, `rm`                                            |
-| `/component`| `ls`, `show`, `apply`, `rm`                                            |
-| `/policy`   | `ls`, `show`, `apply`, `rm`, `explain`                                 |
-| `/cluster`  | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
-| `/task`     | `ls`, `show`, `cancel`                                                 |
-| `/snapshot` | `repo ls`, `ls`, `show`, `create`, `restore`, `rm`                     |
-| `/reindex`  | run a reindex as a background task                                     |
-| `/backup`   | `ls`, `show`, `apply`, `rm`                                            |
-| `/profile`  | `add`, `ls`, `default`, `rm`                                           |
+| Family       | Commands                                                               |
+| ------------ | ---------------------------------------------------------------------- |
+| `/index`     | `ls`, `create`, `rm`, `rollover`, `show`, `settings`, `settings apply` |
+| `/alias`     | `ls`, `apply`, `rm`                                                    |
+| `/template`  | `ls`, `show`, `apply`, `rm`                                            |
+| `/component` | `ls`, `show`, `apply`, `rm`                                            |
+| `/policy`    | `ls`, `show`, `apply`, `rm`, `explain`                                 |
+| `/cluster`   | `info`, `settings`, `settings apply`, `nodes`, `explain`               |
+| `/task`      | `ls`, `show`, `cancel`                                                 |
+| `/snapshot`  | `repo ls`, `ls`, `show`, `create`, `restore`, `rm`                     |
+| `/reindex`   | run a reindex as a background task                                     |
+| `/backup`    | `ls`, `show`, `apply`, `rm`                                            |
+| `/profile`   | `add`, `ls`, `default`, `rm`                                           |
 
-> [!TIP]
+> \[!TIP]
 > Listings and removals accept glob patterns: `/index ls core_*`.
 
 See [docs/design/commands.md](docs/design/commands.md) for the arguments, behavior, and

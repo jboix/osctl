@@ -7,22 +7,39 @@ Thanks for contributing. Participation is governed by the
 
 ```sh
 bun install
-bun run verify    # the whole gate: lint, arch, knip, typecheck, test, build
+bun run verify    # the whole gate: lint, docs, arch, knip, typecheck, test, build, rules
 ```
 
 `verify` runs the whole gate:
 
-| Step                | Tool                  | Checks                                     |
-|---------------------|-----------------------|--------------------------------------------|
-| `bun run lint`      | Biome (`biome.json`)  | Formatting, lint rules, complexity limits  |
-| `bun run arch`      | dependency-cruiser    | Layer boundaries, cycles                   |
-| `bun run knip`      | knip                  | Dead code, unused exports and dependencies |
-| `bun run typecheck` | tsc (`--noEmit`)      | Type errors                                |
-| `bun run test`      | bun test              | Unit tests                                 |
-| `bun run build`     | `bun build --compile` | The binary compiles                        |
+| Step                 | Tool                     | Checks                                                               |
+| -------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `bun run lint`       | Biome (`biome.json`)     | Formatting, lint rules, complexity limits                            |
+| `bun run docs:check` | remark (`.remarkrc.mjs`) | Markdown links                                                       |
+| `bun run arch`       | dependency-cruiser       | Layer boundaries, cycles                                             |
+| `bun run knip`       | knip                     | Dead code, unused exports and dependencies                           |
+| `bun run typecheck`  | tsc (`--noEmit`)         | Type errors                                                          |
+| `bun run test`       | bun test                 | Unit tests and rule tests                                            |
+| `bun run build`      | `bun build --compile`    | The binary compiles                                                  |
+| `bun run rules`      | vibator (`.vibator/`)    | Markdown format and accessibility, TSDoc, writing, command reference |
 
-Requirements: Bun 1.2 or later. Bun runs the TypeScript source directly, so there is no build
-step while developing. `bun run format` applies Biome's formatting.
+Requirements: Bun 1.4.2 or later (see `.tool-versions`). Bun runs the TypeScript source
+directly, so there is no build step while developing. `bun run format` applies Biome's
+formatting. `bun run rules:fix` formats the Markdown.
+
+## Project rules
+
+A check that no linter provides is a [vibator](https://vibator.dev) rule in `.vibator/`, not a
+script. Each rule is one file with a test next to it:
+
+| Rule                  | Checks                                                                   |
+| --------------------- | ------------------------------------------------------------------------ |
+| `markdown-formatted`  | Markdown matches the remark format                                       |
+| `markdown-accessible` | Images have alt text, headings keep their order, links say where they go |
+| `tsdoc-coverage`      | Every function has TSDoc with `@param` and `@returns`                    |
+| `writing-style`       | No em-dashes in docs, comments, or user-facing strings                   |
+| `commands-documented` | Every registered command has a row in `docs/design/commands.md`          |
+| `no-conflict-markers` | No merge conflict markers                                                |
 
 ## Git hooks
 

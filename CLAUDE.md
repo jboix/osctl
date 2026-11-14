@@ -12,18 +12,28 @@ behavior, never future or planned behavior.
 ```sh
 bun install          # install dependencies and the git hooks (husky)
 bun run dev          # run the app from source
-bun run verify       # the whole gate: lint, arch, knip, typecheck, test, build
+bun run verify       # the whole gate: lint, docs, arch, knip, typecheck, test, build, rules
 bun run lint         # Biome check
 bun run format       # Biome format --write
+bun run docs:check   # remark: Markdown links
+bun run docs:format  # remark: format the Markdown
+bun run rules        # vibator: the project rules in .vibator/
+bun run rules:fix    # vibator: apply the rule fixes (Markdown format)
 bun run arch         # dependency-cruiser layer boundaries
 bun run knip         # dead code, unused exports and dependencies
 bun run typecheck    # tsc --noEmit
-bun test             # unit tests (bun:test)
+bun test             # unit tests (bun:test); `bun run test` also runs the rule tests
 bun run build        # compile the native binary to dist/osctl
 bun run build:all    # all release artifacts (scripts/build.ts)
 ```
 
-Run a single test file with `bun test src/<file>.test.ts`.
+Run a single test file with `bun test src/<file>.test.ts`. Bun skips dot-folders, so the rule
+tests run by path: `bun test ./.vibator/`.
+
+## Project rules
+
+A check that no linter provides is a vibator rule in `.vibator/`, not a script. A rule is one
+file with a test next to it. Helpers live in `.vibator/lib/`. vibator needs Bun 1.4.2 or later.
 
 ## Integration environment
 
@@ -67,6 +77,7 @@ major.
 ## Style
 
 - Biome owns formatting and lint: single quotes, 2-space indent.
+- remark owns Markdown formatting (`.remarkrc.mjs`). Biome skips Markdown.
 - Conventional Commits, enforced by commitlint. The commit type sets the release bump
   (semantic-release).
 

@@ -118,6 +118,7 @@ export async function runIndexRm(
  *
  * @param context - What the command can act on.
  * @param name - The index name.
+ * @param writeAlias - The write alias to create with the index, if any.
  * @returns Nothing.
  */
 export async function runIndexCreate(

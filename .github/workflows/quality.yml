@@ -39,6 +39,10 @@ jobs:
         run: |
           bun run lint
 
+      - name: Check Markdown links (remark)
+        run: |
+          bun run docs:check
+
       - name: Check architecture boundaries
         run: |
           bun run arch
@@ -62,6 +66,10 @@ jobs:
       - name: Run the compiled binary
         run: |
           ./dist/osctl
+
+      - name: Project rules (vibator)
+        run: |
+          bun run rules
 
       - name: Test coverage
         uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
