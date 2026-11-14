@@ -1,19 +1,18 @@
-<div align="center">
+# osctl
 
-[![OSCTL Screenshot](docs/README-images/screenshot.png)](https://github.com/jboix/osctl)
 [![Quality](https://github.com/jboix/osctl/actions/workflows/quality.yml/badge.svg)](https://github.com/jboix/osctl/actions/workflows/quality.yml)
 [![npm version](https://img.shields.io/npm/v/osctl)](https://www.npmjs.com/package/osctl)
 [![node](https://img.shields.io/node/v/osctl)](https://nodejs.org)
 [![license: MIT](https://img.shields.io/npm/l/osctl)](./LICENSE)
 
-</div>
-
-# OSCTL
-
 osctl is an interactive terminal interface, built with [Ink](https://github.com/vadimdemedes/ink),
 for managing OpenSearch clusters. It is an alternative to curl and the REST API for routine
 administration. It also removes some ceremony, like resolving `seq_no` and `primary_term` on policy
 updates and carrying aliases over a rollover.
+
+<p align="center">
+  <img src="docs/README-images/screenshot.png" width="760" alt="osctl connected to a local cluster. The prompt holds the text index, and the suggestions list /index ls, /index rm, /index create, and /index rollover with their descriptions. The status bar shows the production profile and a green cluster.">
+</p>
 
 ## Quick start
 
