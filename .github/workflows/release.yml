@@ -3,9 +3,17 @@ name: Release
 on:
   workflow_dispatch:
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The release environment holds the bot's secrets, so only a job that
+    # names it can mint the token, and npm trusted publishing can require it.
+    environment: release
     permissions:
       contents: write
       issues: write
